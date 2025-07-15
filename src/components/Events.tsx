@@ -24,40 +24,40 @@ const Events = () => {
 
   const events = [
     {
-      date: 'MAR 15',
-      title: 'Monthly Club Meet',
-      description: 'Join us for our monthly gathering to plan upcoming adventures and share experiences.',
-      time: '6:00 PM',
-      location: 'Dar es Salaam',
+      date: 'MAR 29 - 30',
+      title: 'Rock Shungu',
+      description: 'Join us for our extreme 4X4 challange, expedition and share experiences.',
+      time: '6:00 AM',
+      location: 'Mkuranga-Pwani',
       attendees: 45,
-      type: 'Meeting'
+      type: 'Offroad'
     },
     {
-      date: 'MAR 22',
-      title: 'Kilimanjaro Challenge',
-      description: 'Epic 3-day expedition to the base camp of Mount Kilimanjaro.',
-      time: '6:00 AM',
-      location: 'Moshi',
+      date: 'APR 18 - 21',
+      title: 'Ruaha National Park',
+      description: 'Epic 3-day expedition to the base camp of Ruaha National Park.',
+      time: '10:00 AM',
+      location: 'Songea',
       attendees: 12,
       type: 'Adventure'
     },
     {
-      date: 'APR 05',
-      title: 'Serengeti Safari',
-      description: 'Wildlife photography expedition through the world-famous Serengeti.',
-      time: '5:00 AM',
-      location: 'Serengeti',
+      date: 'JUN 21 - 22',
+      title: 'Wami Mbiki',
+      description: 'Wildlife photography expedition through the Tanzania best game reserve.',
+      time: '7:00 AM',
+      location: 'Wami-Pwani',
       attendees: 18,
-      type: 'Safari'
+      type: 'Adventure'
     },
     {
-      date: 'APR 18',
-      title: 'Maintenance Workshop',
-      description: 'Learn essential Land Rover maintenance and repair techniques.',
+      date: 'AUG 8 - 10',
+      title: 'Magoroto drive',
+      description: 'Enjoy the best sceneries of coastal regios and its beautiful climatic condition.',
       time: '9:00 AM',
-      location: 'Club Garage',
+      location: 'Tanga',
       attendees: 25,
-      type: 'Workshop'
+      type: 'Offroad Drive'
     }
   ];
 

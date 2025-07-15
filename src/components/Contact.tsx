@@ -51,7 +51,7 @@ const Contact = () => {
     {
       icon: Phone,
       title: 'Call Us',
-      info: '+255 123 456 789',
+      info: '+255 713 652 642',
       subInfo: 'Mon-Fri 9AM-6PM EAT'
     },
     {
@@ -63,7 +63,7 @@ const Contact = () => {
     {
       icon: MessageCircle,
       title: 'WhatsApp',
-      info: '+255 987 654 321',
+      info: '255 713 652 642',
       subInfo: 'Quick questions and updates'
     }
   ];
@@ -196,7 +196,7 @@ const Contact = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
-                    placeholder="+255 123 456 789"
+                    placeholder="+255 xxx xxx xxx"
                   />
                 </div>
 
