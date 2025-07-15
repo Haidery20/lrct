@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
             <img 
-    src="Public/Images/Club Logo.svg" 
+    src="public/Images/Club Logo.svg" 
     alt="Club Logo" 
     className="h-10 w-10 object-contain transition-opacity duration-300"
   />

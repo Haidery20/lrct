@@ -30,7 +30,7 @@ const Header = () => {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
             <img 
-    src="Public/Images/Club Logo.svg" 
+    src="public/Images/Club Logo.svg" 
     alt="Club Logo" 
     className="h-10 w-10 object-contain transition-opacity duration-300"
   />
