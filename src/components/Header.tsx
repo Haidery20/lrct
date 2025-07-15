@@ -29,9 +29,11 @@ const Header = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
-              <Compass className={`h-10 w-10 transition-colors duration-300 ${
-                isScrolled ? 'text-gray-900' : 'text-white'
-              }`} />
+            <img 
+    src="Public/Club Logo.svg" 
+    alt="Club Logo" 
+    className="h-10 w-10 object-contain transition-opacity duration-300"
+  />
               <div className="flex flex-col">
                 <span className={`text-xl font-bold transition-colors duration-300 ${
                   isScrolled ? 'text-gray-900' : 'text-white'

@@ -9,7 +9,11 @@ const Footer = () => {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              <Compass className="h-10 w-10 text-green-400" />
+            <img 
+    src="Public/Club Logo.svg" 
+    alt="Club Logo" 
+    className="h-10 w-10 object-contain transition-opacity duration-300"
+  />
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">Land Rover Club</span>
                 <span className="text-sm text-gray-400">Tanzania</span>
