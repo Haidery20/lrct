@@ -52,7 +52,7 @@ const Header = () => {
               {['Adventures', 'Events', 'Membership', 'Gallery', 'About', 'Contact'].map((item) => (
                 <a
                   key={item}
-                  href={`#${item.toLowerCase()}`}
+                  href={item === 'Gallery' ? '/gallery' : `#${item.toLowerCase()}`}
                   className={`font-medium transition-colors duration-300 hover:text-green-500 ${
                     isScrolled ? 'text-gray-700' : 'text-white/90'
                   }`}

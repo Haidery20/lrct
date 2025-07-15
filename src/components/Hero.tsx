@@ -50,7 +50,8 @@ const Hero = () => {
               <span>Join Our Adventures</span>
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button className="border-2 border-white/30 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all duration-300">
+            <button className="border-2 border-white/30 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all duration-300"
+              onClick={() => window.location.href = '/Gallery'}>
               View Gallery
             </button>
           </div>
@@ -76,13 +77,6 @@ const Hero = () => {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-bounce"></div>
         </div>
       </div>
     </section>

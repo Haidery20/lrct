@@ -23,10 +23,10 @@ const About = () => {
   }, []);
 
   const stats = [
-    { number: '200+', label: 'Active Members' },
+    { number: '100+', label: 'Active Members' },
     { number: '15+', label: 'Years of Adventure' },
-    { number: '50+', label: 'Trails Explored' },
-    { number: '100+', label: 'Events Organized' }
+    { number: '20+', label: 'Trails Explored' },
+    { number: '50+', label: 'Events Organized' }
   ];
 
   const values = [
@@ -75,7 +75,7 @@ const About = () => {
         }`}>
           <div>
             <img
-              src="https://images.pexels.com/photos/1118448/pexels-photo-1118448.jpeg?auto=compress&cs=tinysrgb&w=800"
+              src="public/images/landroverconvoy.jpg"
               alt="Land Rover Club Tanzania"
               className="w-full h-96 object-cover rounded-2xl shadow-2xl"
             />
