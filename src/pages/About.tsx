@@ -111,7 +111,7 @@ const About = () => {
           {/* Story Section */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20 transition-all duration-1000 delay-300 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <img
-              src="/images/Landroverconvoy.jpg"
+              src="/images/landroverconvoy.avif"
               alt="Land Rover Club Tanzania"
               className="w-full h-96 object-cover rounded-2xl shadow-2xl"
             />
