@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Star, Users, Shield } from 'lucide-react';
-import AuthModal from './AuthModal';
+import AuthModal from '../components/AuthModal';
 
 const Membership = () => {
   const [isVisible, setIsVisible] = useState(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Compass, LogIn, UserPlus } from 'lucide-react';
 import AuthModal from './AuthModal';
 
@@ -7,6 +8,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,9 +30,9 @@ const Header = () => {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3">
             <img 
-    src="/images/Club Logo.svg" 
+    src="public/images/Club Logo.svg" 
     alt="Club Logo" 
     className="h-10 w-10 object-contain transition-opacity duration-300"
   />
@@ -46,19 +48,39 @@ const Header = () => {
                   Tanzania
                 </span>
               </div>
-            </div>
+            </Link>
 
             <nav className="hidden md:flex items-center space-x-8">
-              {['Adventures', 'Events', 'Membership', 'Gallery', 'About', 'Contact'].map((item) => (
-                <a
-                  key={item}
-                  href={item === 'Gallery' ? '/gallery' : `#${item.toLowerCase()}`}
-                  className={`font-medium transition-colors duration-300 hover:text-green-500 ${
-                    isScrolled ? 'text-gray-700' : 'text-white/90'
-                  }`}
-                >
-                  {item}
-                </a>
+              {[
+                { name: 'Adventures', path: '/#adventures' },
+                { name: 'Events', path: '/#events' },
+                { name: 'Membership', path: '/#membership' },
+                { name: 'Gallery', path: '/gallery' },
+                { name: 'About', path: '/about' },
+                { name: 'Contact', path: '/#contact' }
+              ].map((item) => (
+                item.path.startsWith('/#') ? (
+                  <a
+                    key={item.name}
+                    href={item.path}
+                    className={`font-medium transition-colors duration-300 hover:text-green-500 ${
+                      isScrolled ? 'text-gray-700' : 'text-white/90'
+                    }`}
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={`font-medium transition-colors duration-300 hover:text-green-500 ${
+                      location.pathname === item.path ? 'text-green-500' : 
+                      isScrolled ? 'text-gray-700' : 'text-white/90'
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
               ))}
               
               <div className="flex items-center space-x-3">
@@ -97,15 +119,35 @@ const Header = () => {
           {isMenuOpen && (
             <div className="md:hidden bg-white shadow-lg rounded-lg mt-2 p-4">
               <nav className="flex flex-col space-y-4">
-                {['Adventures', 'Events', 'Membership', 'Gallery', 'About', 'Contact'].map((item) => (
-                  <a
-                    key={item}
-                    href={`#${item.toLowerCase()}`}
-                    className="text-gray-700 font-medium hover:text-green-600 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item}
-                  </a>
+                {[
+                  { name: 'Adventures', path: '/#adventures' },
+                  { name: 'Events', path: '/#events' },
+                  { name: 'Membership', path: '/#membership' },
+                  { name: 'Gallery', path: '/gallery' },
+                  { name: 'About', path: '/about' },
+                  { name: 'Contact', path: '/#contact' }
+                ].map((item) => (
+                  item.path.startsWith('/#') ? (
+                    <a
+                      key={item.name}
+                      href={item.path}
+                      className="text-gray-700 font-medium hover:text-green-600 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.name}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      className={`font-medium hover:text-green-600 transition-colors ${
+                        location.pathname === item.path ? 'text-green-600' : 'text-gray-700'
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  )
                 ))}
                 
                 <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
