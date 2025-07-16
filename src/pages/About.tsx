@@ -26,10 +26,10 @@ const About = () => {
   }, []);
 
   const stats = [
-    { number: '200+', label: 'Active Members' },
-    { number: '15+', label: 'Years of Adventure' },
-    { number: '50+', label: 'Trails Explored' },
-    { number: '100+', label: 'Events Organized' }
+    { number: '100+', label: 'Active Members' },
+    { number: '5+', label: 'Years of Adventure' },
+    { number: '20+', label: 'Trails Explored' },
+    { number: '50+', label: 'Events Organized' }
   ];
 
   const values = [
@@ -57,23 +57,23 @@ const About = () => {
 
   const team = [
     {
-      name: 'John Mwakalinga',
-      title: 'Founder & Trail Leader',
+      name: 'Winna Shango',
+      title: 'Club Chairperson',
       image: '/images/john.jpg'
     },
     {
-      name: 'Asha Kimaro',
-      title: 'Events Coordinator',
+      name: 'Laban Singoye',
+      title: 'Secretary General',
       image: '/images/asha.jpg'
     },
     {
-      name: 'Samson Mbele',
-      title: 'Safety Officer',
+      name: 'Fredrick Mbuya',
+      title: 'Event Organizers',
       image: '/images/samson.jpg'
     },
     {
-      name: 'Neema Matata',
-      title: 'Community Manager',
+      name: 'Wanda',
+      title: 'Technical Pioneer',
       image: '/images/neema.jpg'
     }
   ];
@@ -85,29 +85,11 @@ const About = () => {
         <div className="absolute inset-0 bg-black/20" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className={`transition-all duration-1000 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <Compass className="h-16 w-16 mx-auto mb-6 text-white/80" />
             <h1 className="text-5xl sm:text-6xl font-bold mb-6">About Land Rover Club Tanzania</h1>
             <p className="text-xl sm:text-2xl max-w-4xl mx-auto leading-relaxed opacity-90 mb-8">
               Discover the story behind Tanzania's premier off-road community and our 
               commitment to adventure, conservation, and camaraderie.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-              {[
-                { icon: Users, number: '100+', label: 'Members' },
-                { icon: Calendar, number: '15+', label: 'Years' },
-                { icon: MapPin, number: '20+', label: 'Trails' },
-                { icon: Trophy, number: '50+', label: 'Events' }
-              ].map((stat, index) => (
-                <div
-                  key={stat.label}
-                  className={`bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 transform hover:scale-105 delay-${index * 100}`}
-                >
-                  <stat.icon className="h-8 w-8 text-white/80 mx-auto mb-3" />
-                  <div className="text-2xl font-bold text-white mb-1">{stat.number}</div>
-                  <div className="text-white/80 text-sm">{stat.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -120,7 +102,7 @@ const About = () => {
           <div className={`text-center mb-16 transition-all duration-1000 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">Our Journey</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Founded in 2008, we are Tanzania's premier Land Rover enthusiast community. 
+              Founded in 2019, we are Tanzania's premier Land Rover enthusiast community. 
               Our passion for adventure, conservation, and camaraderie has brought together 
               passionate explorers from across East Africa.
             </p>
@@ -129,7 +111,7 @@ const About = () => {
           {/* Story Section */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20 transition-all duration-1000 delay-300 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <img
-              src="https://images.pexels.com/photos/1118448/pexels-photo-1118448.jpeg?auto=compress&cs=tinysrgb&w=800&h=600"
+              src="/images/Landroverconvoy.jpg"
               alt="Land Rover Club Tanzania"
               className="w-full h-96 object-cover rounded-2xl shadow-2xl"
             />
@@ -144,11 +126,6 @@ const About = () => {
                 Our members come from all walks of life, united by their passion for adventure 
                 and their love for the legendary Land Rover.
               </p>
-              <div className="flex items-center space-x-4">
-                <StatBlock number="15+" label="Years Active" />
-                <StatBlock number="100+" label="Members" />
-                <StatBlock number="20+" label="Trails" />
-              </div>
             </div>
           </div>
 
