@@ -26,9 +26,9 @@ const Footer = () => {
             <div className="flex space-x-4">
               {[
                 { icon: Facebook, href: '#' },
-                { icon: Instagram, href: '#' },
+                { icon: Instagram, href: 'https://www.instagram.com/landrover_club_tanzania/' },
                 { icon: Twitter, href: '#' },
-                { icon: Mail, href: '#' }
+                { icon: Mail, href: 'info@landroverclub.or.tz' }
               ].map((social, index) => (
                 <a
                   key={index}

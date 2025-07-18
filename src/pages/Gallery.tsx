@@ -8,53 +8,62 @@ const Gallery = () => {
   const categories = [
     { id: 'all', name: 'All Photos' },
     { id: 'expeditions', name: 'Expeditions' },
-    { id: 'events', name: 'Club Events' },
-    { id: 'vehicles', name: 'Vehicles' },
-    { id: 'landscapes', name: 'Landscapes' },
-    { id: 'wildlife', name: 'Wildlife' }
+    { id: 'events', name: 'Events' },
+    { id: 'Festivals', name: 'Festivals' },
+    { id: 'Offroads', name: 'Offroads' },
+    { id: 'Family', name: 'Family' }
   ];
 
   const galleryItems = [
     {
       id: 1,
-      image: 'https://images.pexels.com/photos/1118448/pexels-photo-1118448.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
-      title: 'Kilimanjaro Base Camp Expedition',
-      category: 'expeditions',
-      location: 'Mount Kilimanjaro',
-      date: 'March 2024',
+      image: '/images/mpalano.jpg',
+      title: 'Mpalano Festival',
+      category: 'Festivals',
+      location: 'Matema Beach',
+      date: 'July 2025',
       participants: 12
     },
     {
       id: 2,
-      image: 'https://images.pexels.com/photos/631317/pexels-photo-631317.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
-      title: 'Serengeti Wildlife Safari',
-      category: 'wildlife',
-      location: 'Serengeti National Park',
-      date: 'February 2024',
+      image: '/images/rockshungu.jpg',
+      title: 'Rock Shungu',
+      category: 'Offroads',
+      location: 'Shungumbweni',
+      date: 'June 2025',
       participants: 18
     },
     {
       id: 3,
-      image: 'https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
-      title: 'Mountain Trail Challenge',
-      category: 'expeditions',
-      location: 'Usambara Mountains',
-      date: 'January 2024',
+      image: '/images/landroverfestival.jpg',
+      title: 'Landrover Festival',
+      category: 'Festivals',
+      location: 'Arusha',
+      date: 'October 2024',
       participants: 15
     },
     {
       id: 4,
       image: 'https://images.pexels.com/photos/1670732/pexels-photo-1670732.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
-      title: 'Ngorongoro Crater Adventure',
-      category: 'landscapes',
-      location: 'Ngorongoro Conservation Area',
-      date: 'December 2023',
+      title: 'Saadani National Park',
+      category: 'expeditions',
+      location: 'Saadani - Bagamoyo',
+      date: 'June 2024',
+      participants: 20
+    },
+    {
+      id: 4,
+      image: '/images/udzungwa.jpg',
+      title: 'Udzungwa National Park',
+      category: 'expeditions',
+      location: 'Udzungwa - Morogoro',
+      date: 'June 2024',
       participants: 20
     },
     {
       id: 5,
       image: 'https://images.pexels.com/photos/1670766/pexels-photo-1670766.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
-      title: 'Ruaha National Park Expedition',
+      title: 'Ruaha National Park',
       category: 'expeditions',
       location: 'Ruaha National Park',
       date: 'November 2023',
@@ -63,13 +72,13 @@ const Gallery = () => {
     {
       id: 6,
       image: 'https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
-      title: 'Coastal Discovery Tour',
-      category: 'landscapes',
-      location: 'Indian Ocean Coast',
+      title: 'Magoroto Forest',
+      category: 'expeditions',
+      location: 'Tanga',
       date: 'October 2023',
       participants: 25
     },
-    {
+    /*{
       id: 7,
       image: 'https://images.pexels.com/photos/4577543/pexels-photo-4577543.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
       title: 'Cultural Heritage Visit',
@@ -122,7 +131,7 @@ const Gallery = () => {
       location: 'Club Workshop',
       date: 'April 2023',
       participants: 18
-    }
+    }*/
   ];
 
   const filteredItems = selectedCategory === 'all' 
