@@ -60,7 +60,7 @@ const Gallery = () => {
       date: 'June 2024',
       participants: 20
     },
-    {
+    /*{
       id: 5,
       image: 'https://images.pexels.com/photos/1670766/pexels-photo-1670766.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
       title: 'Ruaha National Park',
@@ -68,7 +68,7 @@ const Gallery = () => {
       location: 'Ruaha National Park',
       date: 'November 2023',
       participants: 8
-    },
+    },*/
     {
       id: 6,
       image: 'https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=800&h=600',
