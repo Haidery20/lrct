@@ -7,6 +7,7 @@ import About from './pages/About';
 import Gallery from './pages/Gallery';
 import Membership from './pages/Membership';
 import Events from './pages/Events';
+import Festivals from './pages/Festivals';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/Gallery" element={<Gallery />} />
             <Route path="/Membership" element={<Membership />} />
             <Route path="/Events" element={<Events />} />
+            <Route path="/Festivals" element={<Festivals />} />
           </Routes>
         </main>
         <Footer />

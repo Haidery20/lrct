@@ -52,7 +52,7 @@ const Header = () => {
 
             <nav className="hidden md:flex items-center space-x-8">
               {[
-                { name: 'Adventures', path: '/#adventures' },
+                { name: 'Festivals', path: '/festivals' },
                 { name: 'Events', path: '/events' },
                 { name: 'Membership', path: '/membership' },
                 { name: 'Gallery', path: '/gallery' },
