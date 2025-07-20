@@ -3,7 +3,7 @@ import Hero from '../components/Hero';
 import Adventures from '../components/Adventures';
 import Events from '../pages/Events';
 import Membership from '../pages/Membership';
-import Contact from '../components/Contact';
+import Contact from '../pages/Contact';
 
 const Home = () => {
   return (

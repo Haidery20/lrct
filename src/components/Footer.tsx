@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Facebook, Instagram, Twitter, Mail } from 'lucide-react';
+import { Compass, Facebook, Instagram, Twitter, Mail, Youtube } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -25,9 +25,10 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               {[
-                { icon: Facebook, href: '#' },
+                { icon: Facebook, href: 'https://www.facebook.com/people/Landroverclubtanzania/100075810649851/' },
                 { icon: Instagram, href: 'https://www.instagram.com/landrover_club_tanzania/' },
                 { icon: Twitter, href: '#' },
+                { icon: Youtube, href: 'https://www.youtube.com/@landroverclubtanzania296'},
                 { icon: Mail, href: 'info@landroverclub.or.tz' }
               ].map((social, index) => (
                 <a
