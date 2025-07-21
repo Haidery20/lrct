@@ -84,17 +84,7 @@ const Header = () => {
               ))}
               
               <div className="flex items-center space-x-3">
-                <button 
-                  onClick={() => openAuthModal('login')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-full font-medium transition-all duration-300 hover:scale-105 ${
-                    isScrolled 
-                      ? 'text-gray-700 hover:bg-gray-100' 
-                      : 'text-white/90 hover:bg-white/10'
-                  }`}
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Login</span>
-                </button>
+                
                 
                 <button 
                   onClick={() => openAuthModal('signup')}

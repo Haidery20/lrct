@@ -51,7 +51,7 @@ const Hero = () => {
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </button>
             <button className="border-2 border-white/30 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all duration-300"
-              onClick={() => window.location.href = '/Gallery'}>
+              onClick={() => window.location.href = '/gallery'}>
               View Gallery
             </button>
           </div>
