@@ -381,15 +381,15 @@ landroverclubtz@gmail.com
             >
               <Card className="max-w-2xl mx-auto">
                 <CardContent className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Hujui ni uanachama upi unakufaa?</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Not sure which membership is right for you?</h3>
                   <p className="text-gray-600 mb-6">
-                    Wasiliana na timu yetu kupata ushauri wa kibinafsi kulingana na mapendeleo na uzoefu wako.
+                  Contact our team for personal advice based on your preferences and experience.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button onClick={() => setShowForm(true)} className="bg-green-600 hover:bg-green-700">
-                      Omba Ujumbe
+                      Apply Membership
                     </Button>
-                    <Button variant="outline">Pata Ushauri</Button>
+                    <Button variant="outline">Get Advice</Button>
                   </div>
                 </CardContent>
               </Card>

@@ -59,7 +59,7 @@ const About = () => {
     {
       name: 'Winna Shango',
       title: 'Club Chairperson',
-      image: '/images/john.jpg'
+      image: '/images/winna.jpg'
     },
     {
       name: 'Laban Singoye',
