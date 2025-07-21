@@ -5,15 +5,15 @@ import Events from '../pages/Events';
 import Membership from '../pages/Membership';
 import Contact from '../pages/Contact';
 import Festivals from '../pages/Festivals';
+import Partners from '../pages/Partners';
 
 const Home = () => {
   return (
     <>
       <Hero />
-      <Festivals />
       <Events />
-      <Membership />
       <Contact />
+      <Partners />
     </>
   );
 };
