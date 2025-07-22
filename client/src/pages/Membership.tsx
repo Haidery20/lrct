@@ -3,7 +3,10 @@
 import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, Star, Users, Shield, Download, Upload } from "lucide-react"
+import { Check, Star, Users, Shield, Download, Upload, FileText } from "lucide-react"
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+import { saveAs } from 'file-saver'
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Input } from "../components/ui/input"
@@ -134,150 +137,138 @@ const Membership = () => {
     alert("Maombi ya ujumbe yamewasilishwa kwa mafanikio!")
   }
 
-  const generatePDF = () => {
+  // Generate ODF (Open Document Format) content
+  const generateODFContent = () => {
     const currentDate = new Date().toLocaleDateString("sw-TZ")
-    const pdfContent = `
-                                                            
-                                                                                                                      
-                                      
- 
-      LAND ROVER CLUB TANZANIA 
- P. O. BOX 77, MOROGORO. TANZANIA 
-                             TEL; +255 763 652 641/+255 718 133 333 
-                                     Email; landroverclubtz@gmail.com 
- 
- 
- 
-Kumb Na. LRCT/Adm/......................     Tarehe ${currentDate}
- 
- 
- 
- 
- 
- 
- 
- 
- 
-A. MAELEZO YA MWOMBAJI NA MDHAMINI 
-1. TAARIFA BINAFSI 
-1.1 Jina la Mwombaji: ${formData.jinaLaMwombaji}
-1.2 Tarehe ya Kuzaliwa: ${formData.tareheyaKuzaliwa} (Ambatisha nakala ya Kitambulisho cha Taifa au Hati ya 
-Kusafiria) 
-1.3 Jinsia: ${formData.jinsia === "me" ? "Me ✓" : "Me"} ${formData.jinsia === "ke" ? "Ke ✓" : "Ke"}
-1.4 Anuani Kamili: S.L.P ${formData.slp}
-${formData.anuaniKamili}
-Namba ya simu ya mkononi: ${formData.nambaYaSimu} Barua pepe: ${formData.baruaPepe}
- 
-1.5 Wasifu wa mwombaji kwa ufipi: 
-${formData.wasifuWaMwombaji}
- 
- 
- 
- 
- 
- 
- 
-1.6 Umepataje taarifa za Tanzania Land Rover Club: ${formData.umepatajeTaarifa}
- 
-1.7 Tamko la Mwombaji kwa Club: 
-Mimi ${formData.jinaLaMwombaji} ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, 
-ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na 
-Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote 
-nilizoziandika kwenye fomu hii ni za kweli na sahihi. 
- 
-Sahihi ya mwombaji ...................................  tarehe ${currentDate}
- 
-BANDIKA 
-PICHA 
-
-                                                            
-                                                                                                                      
-                                      
- 
-      LAND ROVER CLUB TANZANIA 
- P. O. BOX 77, MOROGORO. TANZANIA 
-                             TEL; +255 763 652 641/+255 718 133 333 
-                                     Email; landroverclubtz@gmail.com 
- 
-2. MDHAMINI 
-2.1 Jina la Mdhamini: ${formData.jinaLaMdhamini}
-2.2 Anuani kamili; S.L.P: ${formData.slpYaMdhamini}
-${formData.anuaniYaMdhamini}
-Namba ya simu ya Mkononi: ${formData.nambaYaSimuYaMdhamini} Barua pepe: ${formData.baruaPepeYaMdhamini}
-2.3 Maelezo ya mdhamini kwa mdhaminiwa: ${formData.malezoYaMdhamini}
-2.4 Sahihi ya Mdhamini .................. Tarehe ${currentDate}
- 
- 
-B. MASHARTI YA KUJIUNGA 
- 
-3. ADA NA MICHANGO 
-3.1 Ada na Michango ya lazima 
- 
-Na. Aina ya Malipo Kiwango Tsh Maelezo 
-1 Malipo ya Fomu 50,000/- Inalipwa mara moja wakati wa 
-kuchukua fomu 
-2 Ada ya Kiingilio kwa 
-Mwombaji 
-60,000/- Inalipwa mara moja tu (Wakati wa 
-kujiunga na Klabu) 
-3 Ada ya mwezi  15,000/- Inalipwa kila mwezi (Kati ya Tarehe 1 
-hadi 5 ya Mwezi) 
-4 Michango mbali 
-mabali (Kama Msiba, 
-maradhi, Sare, n.k) 
-50,000/- Inaweza kulipwa pamoja na ada ya 
-Kiingilio kwa mwanaklabu anaejiunga 
-ama kati ya mwezi Januari na Juni 
-kwa mwanaklabu aliyekwisha jiunga 
- 
-Muhimu: Mwanaklabu atatakiwa kulipa michango hii ndani ya siku 14 (kumi na nne) 
-tangia tarehe ya kukubaliwa kuwa mjumbe wa Klabu. Utaratibu wa malipo ya ada na 
-michango utaelekezwa katika barua ya kukubaliwa. 
- 
-3.2 Michango Mingine 
-3.2.1 Barua ya kukubaliwa kujiunga na Klabu, maelezo mengine ya aina ya ada/na 
-michango inayohitajika kwa wakati huo yaweza kutolewa au kuelekezwa 
-3.2.2 Iwapo mwombaji ataridhia malipo hayo, atawajibika kutoa taarifa ya 
-kimaandishi kwa Katibu wa Klabu ya kuwasilisha malipo hayo. 
- 
-
-                                                            
-                                                                                                                      
-                                      
- 
-      LAND ROVER CLUB TANZANIA 
- P. O. BOX 77, MOROGORO. TANZANIA 
-                             TEL; +255 763 652 641/+255 718 133 333 
-                                     Email; landroverclubtz@gmail.com 
- 
- 
-C. KWA MATUMIZI YA OFISI TU 
-4. UTHIBITISHO WA MAOMBI 
-Mara baada ya kuyasoma maombi na kuhojiana na mwombaji pamoja na mdhamini wake, 
-uongozi wa Klabu umepitisha/umekataa kupitisha/kukubali maombi ya Bw${formData.jinaLaMwombaji}
-katika kikao chake cha tarehe ........................ kujiunga na Tanzania Land Rover Klabu. 
- 
-Jina na Sahihi ya Katibu: .........................................            Tarehe: ................................. 
- 
-Jina na Sahihi ya Mwenyekiti: .........................................  Tarehe: .................................. 
- 
-Muhimu; Maombi haya yatumwe kwa njia ya barua pepe ya Klabu, 
-landroverclubtz@gmail.com 
- 
- 
- 
-    `
-
-    const blob = new Blob([pdfContent], { type: "text/plain;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `LRCT-Application-${formData.jinaLaMwombaji || "Form"}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    
+    // ODF content with proper XML structure for OpenDocument Text format
+    const odfContent = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2">
+  <office:automatic-styles>
+    <style:style style:name="P1" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center"/>
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+  </office:automatic-styles>
+  <office:body>
+    <office:text>
+      <text:p text:style-name="P1">LAND ROVER CLUB TANZANIA</text:p>
+      <text:p>P. O. BOX 77, MOROGORO. TANZANIA</text:p>
+      <text:p>TEL; +255 763 652 641/+255 718 133 333</text:p>
+      <text:p>Email; landroverclubtz@gmail.com</text:p>
+      <text:p></text:p>
+      <text:p>Kumb Na. LRCT/Adm/......................     Tarehe ${currentDate}</text:p>
+      <text:p></text:p>
+      <text:p text:style-name="P1">A. MAELEZO YA MWOMBAJI NA MDHAMINI</text:p>
+      <text:p>1. TAARIFA BINAFSI</text:p>
+      <text:p>1.1 Jina la Mwombaji: ${formData.jinaLaMwombaji}</text:p>
+      <text:p>1.2 Tarehe ya Kuzaliwa: ${formData.tareheyaKuzaliwa}</text:p>
+      <text:p>1.3 Jinsia: ${formData.jinsia === "me" ? "Me ✓" : "Me"} ${formData.jinsia === "ke" ? "Ke ✓" : "Ke"}</text:p>
+      <text:p>1.4 Anuani Kamili: S.L.P ${formData.slp}</text:p>
+      <text:p>${formData.anuaniKamili}</text:p>
+      <text:p>Namba ya simu: ${formData.nambaYaSimu} Barua pepe: ${formData.baruaPepe}</text:p>
+      <text:p></text:p>
+      <text:p>1.5 Wasifu wa mwombaji kwa ufipi:</text:p>
+      <text:p>${formData.wasifuWaMwombaji}</text:p>
+      <text:p></text:p>
+      <text:p>1.6 Umepataje taarifa za Tanzania Land Rover Club: ${formData.umepatajeTaarifa}</text:p>
+      <text:p></text:p>
+      <text:p>2. MDHAMINI</text:p>
+      <text:p>2.1 Jina la Mdhamini: ${formData.jinaLaMdhamini}</text:p>
+      <text:p>2.2 Anuani kamili; S.L.P: ${formData.slpYaMdhamini}</text:p>
+      <text:p>${formData.anuaniYaMdhamini}</text:p>
+      <text:p>Namba ya simu: ${formData.nambaYaSimuYaMdhamini} Barua pepe: ${formData.baruaPepeYaMdhamini}</text:p>
+      <text:p>2.3 Maelezo ya mdhamini: ${formData.malezoYaMdhamini}</text:p>
+      <text:p>2.4 Sahihi ya Mdhamini .................. Tarehe ${currentDate}</text:p>
+      <text:p></text:p>
+      <text:p>Muhimu; Maombi haya yatumwe kwa njia ya barua pepe ya Klabu, landroverclubtz@gmail.com</text:p>
+    </office:text>
+  </office:body>
+</office:document-content>`
+    
+    return odfContent
   }
+
+  // Generate PDF using jsPDF
+  const generatePDF = async () => {
+    const currentDate = new Date().toLocaleDateString("sw-TZ")
+    const doc = new jsPDF()
+    
+    // Set font
+    doc.setFont("helvetica", "normal")
+    
+    // Header
+    doc.setFontSize(16)
+    doc.setFont("helvetica", "bold")
+    doc.text("LAND ROVER CLUB TANZANIA", 105, 20, { align: "center" })
+    
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "normal")
+    doc.text("P. O. BOX 77, MOROGORO. TANZANIA", 105, 30, { align: "center" })
+    doc.text("TEL; +255 763 652 641/+255 718 133 333", 105, 36, { align: "center" })
+    doc.text("Email; landroverclubtz@gmail.com", 105, 42, { align: "center" })
+    
+    // Reference and Date
+    doc.text(`Kumb Na. LRCT/Adm/......................     Tarehe ${currentDate}`, 20, 60)
+    
+    // Section A
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.text("A. MAELEZO YA MWOMBAJI NA MDHAMINI", 20, 80)
+    doc.text("1. TAARIFA BINAFSI", 20, 95)
+    
+    doc.setFontSize(11)
+    doc.setFont("helvetica", "normal")
+    let yPos = 110
+    
+    // Form data
+    doc.text(`1.1 Jina la Mwombaji: ${formData.jinaLaMwombaji}`, 20, yPos)
+    yPos += 10
+    doc.text(`1.2 Tarehe ya Kuzaliwa: ${formData.tareheyaKuzaliwa}`, 20, yPos)
+    yPos += 10
+    doc.text(`1.3 Jinsia: ${formData.jinsia === "me" ? "Me ✓" : "Me"} ${formData.jinsia === "ke" ? "Ke ✓" : "Ke"}`, 20, yPos)
+    yPos += 10
+    doc.text(`1.4 Anuani Kamili: S.L.P ${formData.slp}`, 20, yPos)
+    yPos += 6
+    doc.text(`${formData.anuaniKamili}`, 20, yPos)
+    yPos += 10
+    doc.text(`Namba ya simu: ${formData.nambaYaSimu} Barua pepe: ${formData.baruaPepe}`, 20, yPos)
+    
+    // Add new page for continuation
+    doc.addPage()
+    yPos = 20
+    
+    doc.text(`1.5 Wasifu wa mwombaji: ${formData.wasifuWaMwombaji}`, 20, yPos)
+    yPos += 20
+    doc.text(`1.6 Umepataje taarifa: ${formData.umepatajeTaarifa}`, 20, yPos)
+    
+    // Guarantor section
+    yPos += 30
+    doc.setFont("helvetica", "bold")
+    doc.text("2. MDHAMINI", 20, yPos)
+    yPos += 15
+    
+    doc.setFont("helvetica", "normal")
+    doc.text(`2.1 Jina la Mdhamini: ${formData.jinaLaMdhamini}`, 20, yPos)
+    yPos += 10
+    doc.text(`2.2 Anuani: ${formData.anuaniYaMdhamini}`, 20, yPos)
+    yPos += 10
+    doc.text(`Simu: ${formData.nambaYaSimuYaMdhamini} Barua pepe: ${formData.baruaPepeYaMdhamini}`, 20, yPos)
+    
+    // Save as PDF
+    doc.save(`LRCT-Application-${formData.jinaLaMwombaji || "Form"}.pdf`)
+  }
+
+  // Generate ODF file
+  const generateODF = () => {
+    const odfContent = generateODFContent()
+    const blob = new Blob([odfContent], { 
+      type: "application/vnd.oasis.opendocument.text" 
+    })
+    saveAs(blob, `LRCT-Application-${formData.jinaLaMwombaji || "Form"}.odt`)
+  }
+
+
 
   return (
     <section id="membership" ref={sectionRef} className="py-20 bg-gray-50">
@@ -740,6 +731,15 @@ landroverclubtz@gmail.com
                   >
                     <Download className="h-4 w-4" />
                     Pakua PDF
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={generateODF}
+                    className="flex-1 flex items-center justify-center gap-2 bg-transparent"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Pakua ODF
                   </Button>
                   <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
                     Wasilisha Maombi
