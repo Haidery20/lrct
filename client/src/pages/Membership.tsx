@@ -7,6 +7,7 @@ import { Check, Star, Users, Shield, Download, Upload, FileText } from "lucide-r
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { saveAs } from 'file-saver'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Input } from "../components/ui/input"
@@ -131,10 +132,65 @@ const Membership = () => {
     }))
   }
 
+  const queryClient = useQueryClient()
+
+  // Get next reference number for display
+  const { data: nextRefData } = useQuery<{ referenceNumber: string }>({
+    queryKey: ['/api/next-reference-number'],
+    enabled: showForm,
+  })
+
+  // Submit membership application
+  const submitMutation = useMutation({
+    mutationFn: async (applicationData: any) => {
+      const response = await fetch('/api/membership-applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(applicationData),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to submit application')
+      }
+      return response.json()
+    },
+    onSuccess: (data) => {
+      alert(`Maombi ya ujumbe yamewasilishwa kwa mafanikio! Namba ya kumbukumbu: ${data.referenceNumber}`)
+      setFormData({
+        jinaLaMwombaji: "",
+        tareheyaKuzaliwa: "",
+        jinsia: "",
+        anuaniKamili: "",
+        slp: "",
+        nambaYaSimu: "",
+        baruaPepe: "",
+        wasifuWaMwombaji: "",
+        umepatajeTaarifa: "",
+        tamkoLaMwombaji: "",
+        jinaLaMdhamini: "",
+        anuaniYaMdhamini: "",
+        slpYaMdhamini: "",
+        nambaYaSimuYaMdhamini: "",
+        baruaPepeYaMdhamini: "",
+        malezoYaMdhamini: "",
+        picha: null,
+        termsAccepted: false,
+      })
+      setShowForm(false)
+      queryClient.invalidateQueries({ queryKey: ['/api/next-reference-number'] })
+    },
+    onError: (error) => {
+      console.error('Error submitting application:', error)
+      alert('Kuna hitilafu imetokea. Jaribu tena.')
+    },
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    alert("Maombi ya ujumbe yamewasilishwa kwa mafanikio!")
+    // Remove fields that are not needed for the database
+    const { picha, termsAccepted, tamkoLaMwombaji, ...dbData } = formData
+    submitMutation.mutate(dbData)
   }
 
   // Generate ODF (Open Document Format) content
@@ -165,7 +221,7 @@ const Membership = () => {
       <text:p>TEL; +255 763 652 641/+255 718 133 333</text:p>
       <text:p>Email; landroverclubtz@gmail.com</text:p>
       <text:p></text:p>
-      <text:p>Kumb Na. LRCT/Adm/......................     Tarehe ${currentDate}</text:p>
+      <text:p>Kumb Na. ${nextRefData?.referenceNumber || 'LRCT/Adm/..........'}     Tarehe ${currentDate}</text:p>
       <text:p></text:p>
       <text:p text:style-name="P1">A. MAELEZO YA MWOMBAJI NA MDHAMINI</text:p>
       <text:p>1. TAARIFA BINAFSI</text:p>
@@ -234,7 +290,7 @@ const Membership = () => {
     doc.text("Email; landroverclubtz@gmail.com", 105, 42, { align: "center" })
     
     // Reference and Date
-    doc.text(`Kumb Na. LRCT/Adm/......................     Tarehe ${currentDate}`, 20, 60)
+    doc.text(`Kumb Na. ${nextRefData?.referenceNumber || 'LRCT/Adm/..........'}     Tarehe ${currentDate}`, 20, 60)
     
     // Section A
     doc.setFontSize(14)
@@ -422,7 +478,7 @@ const Membership = () => {
                 <p className="text-sm text-gray-600">Email; landroverclubtz@gmail.com</p>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span>Kumb Na. LRCT/Adm/........................</span>
+                <span>Kumb Na. {nextRefData?.referenceNumber || 'LRCT/Adm/...........'}</span>
                 <span>Tarehe {new Date().toLocaleDateString("sw-TZ")}</span>
               </div>
             </CardHeader>
@@ -766,8 +822,12 @@ const Membership = () => {
                     <FileText className="h-4 w-4" />
                     Pakua ODF
                   </Button>
-                  <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
-                    Wasilisha Maombi
+                  <Button 
+                    type="submit" 
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={submitMutation.isPending}
+                  >
+                    {submitMutation.isPending ? "Inawasilisha..." : "Wasilisha Maombi"}
                   </Button>
                 </div>
               </form>
