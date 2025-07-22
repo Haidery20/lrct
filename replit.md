@@ -11,12 +11,14 @@ A full-stack web application for the Land Rover Club Tanzania, featuring event m
   - Updated navigation components to use wouter's useLocation hook properly
   - Fixed Hero component navigation to use wouter's setLocation instead of window.location.href
   - Successfully deployed and running on port 5000
-- **PDF and ODF Download Implementation (December 2024)**:
+- **PDF and ODF Download Implementation (January 2025)**:
   - Added jsPDF, html2canvas, and file-saver dependencies
   - Implemented proper PDF generation using jsPDF with formatted layout
   - Added ODF (Open Document Format) generation for membership applications
   - Users can now download membership forms in both PDF and ODF formats
   - Replaced old text file download with professional document formats
+  - **Club Logo Integration**: Added club logo (club_logo.svg) to the left top corner of both PDF and ODF membership forms
+  - Dual download buttons now available: "Pakua PDF" and "Pakua ODF" for membership applications
 
 ## Project Architecture
 

@@ -143,15 +143,23 @@ const Membership = () => {
     
     // ODF content with proper XML structure for OpenDocument Text format
     const odfContent = `<?xml version="1.0" encoding="UTF-8"?>
-<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2">
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" office:version="1.2">
   <office:automatic-styles>
     <style:style style:name="P1" style:family="paragraph">
       <style:paragraph-properties fo:text-align="center"/>
       <style:text-properties fo:font-weight="bold"/>
     </style:style>
+    <style:style style:name="P2" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="left"/>
+    </style:style>
   </office:automatic-styles>
   <office:body>
     <office:text>
+      <text:p text:style-name="P2">
+        <draw:frame draw:style-name="fr1" draw:name="ClubLogo" text:anchor-type="paragraph" svg:width="2cm" svg:height="2cm" draw:z-index="0">
+          <draw:image xlink:href="/images/club_logo.svg" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>
+        </draw:frame>
+      </text:p>
       <text:p text:style-name="P1">LAND ROVER CLUB TANZANIA</text:p>
       <text:p>P. O. BOX 77, MOROGORO. TANZANIA</text:p>
       <text:p>TEL; +255 763 652 641/+255 718 133 333</text:p>
@@ -197,7 +205,24 @@ const Membership = () => {
     // Set font
     doc.setFont("helvetica", "normal")
     
-    // Header
+    // Add club logo in the left top corner
+    try {
+      const logoImg = new Image()
+      logoImg.src = '/images/club_logo.svg'
+      
+      // Wait for image to load
+      await new Promise((resolve, reject) => {
+        logoImg.onload = resolve
+        logoImg.onerror = reject
+      })
+      
+      // Add logo to PDF (left top corner)
+      doc.addImage(logoImg, 'SVG', 10, 10, 30, 30)
+    } catch (error) {
+      console.log('Could not load logo:', error)
+    }
+    
+    // Header (adjusted for logo)
     doc.setFontSize(16)
     doc.setFont("helvetica", "bold")
     doc.text("LAND ROVER CLUB TANZANIA", 105, 20, { align: "center" })
