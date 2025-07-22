@@ -1,5 +1,4 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Route, Switch } from 'wouter';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -11,22 +10,20 @@ import Festivals from './pages/Festivals';
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen">
-        <Header />
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/About" element={<About />} />
-            <Route path="/Gallery" element={<Gallery />} />
-            <Route path="/Membership" element={<Membership />} />
-            <Route path="/Events" element={<Events />} />
-            <Route path="/Festivals" element={<Festivals />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+    <div className="min-h-screen">
+      <Header />
+      <main>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/about" component={About} />
+          <Route path="/gallery" component={Gallery} />
+          <Route path="/membership" component={Membership} />
+          <Route path="/events" component={Events} />
+          <Route path="/festivals" component={Festivals} />
+        </Switch>
+      </main>
+      <Footer />
+    </div>
   );
 }
 

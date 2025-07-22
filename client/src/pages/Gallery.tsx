@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, MapPin, Calendar, Users, Play, X } from 'lucide-react';
 
 const Gallery = () => {

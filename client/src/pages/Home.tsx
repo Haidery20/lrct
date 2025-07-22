@@ -1,4 +1,4 @@
-import React from 'react';
+//
 import Hero from '../components/Hero';
 import Adventures from '../pages/Festivals';
 import Events from '../pages/Events';

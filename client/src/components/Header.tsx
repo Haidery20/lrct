@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
 import { Menu, X, Compass, LogIn, UserPlus } from 'lucide-react';
 import AuthModal from './AuthModal';
 
@@ -8,7 +8,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const location = useLocation();
+  const [location] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,7 +74,7 @@ const Header = () => {
                     key={item.name}
                     to={item.path}
                     className={`font-medium transition-colors duration-300 hover:text-green-500 ${
-                      location.pathname === item.path ? 'text-green-500' : 
+                      location === item.path ? 'text-green-500' : 
                       isScrolled ? 'text-gray-700' : 'text-white/90'
                     }`}
                   >
@@ -131,7 +131,7 @@ const Header = () => {
                       key={item.name}
                       to={item.path}
                       className={`font-medium hover:text-green-600 transition-colors ${
-                        location.pathname === item.path ? 'text-green-600' : 'text-gray-700'
+                        location === item.path ? 'text-green-600' : 'text-gray-700'
                       }`}
                       onClick={() => setIsMenuOpen(false)}
                     >
