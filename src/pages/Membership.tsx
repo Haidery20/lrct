@@ -238,7 +238,7 @@ const Membership = () => {
       <text:p>${formData.anuaniKamili}</text:p>
       <text:p>Namba ya simu: ${formData.nambaYaSimu} Barua pepe: ${formData.baruaPepe}</text:p>
       <text:p></text:p>
-      <text:p>1.5 Wasifu wa mwombaji kwa ufipi:</text:p>
+      <text:p>1.5 Wasifu wa mwombaji kwa ufupi:</text:p>
       <text:p>${formData.wasifuWaMwombaji}</text:p>
       <text:p></text:p>
       <text:p>1.6 Umepataje taarifa za Tanzania Land Rover Club: ${formData.umepatajeTaarifa}</text:p>
@@ -686,7 +686,7 @@ const Membership = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="wasifuWaMwombaji">1.5 Wasifu wa mwombaji kwa ufipi *</Label>
+                        <Label htmlFor="wasifuWaMwombaji">1.5 Wasifu wa mwombaji kwa ufupi *</Label>
                         <Textarea
                           id="wasifuWaMwombaji"
                           value={formData.wasifuWaMwombaji}
