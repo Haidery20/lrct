@@ -215,6 +215,12 @@ const Membership = () => {
         <draw:frame draw:style-name="fr1" draw:name="ClubLogo" text:anchor-type="paragraph" svg:width="2cm" svg:height="2cm" draw:z-index="0">
           <draw:image xlink:href="/images/club_logo.svg" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>
         </draw:frame>
+        ${formData.picha ? `
+        <draw:frame draw:style-name="fr2" draw:name="UserPhoto" text:anchor-type="paragraph" svg:width="3.5cm" svg:height="4.7cm" draw:z-index="1" svg:x="14cm" svg:y="3cm">
+          <draw:text-box>
+            <text:p>Picha ya Mwombaji (Uploaded Image)</text:p>
+          </draw:text-box>
+        </draw:frame>` : ''}
       </text:p>
       <text:p text:style-name="P1">LAND ROVER CLUB TANZANIA</text:p>
       <text:p>P. O. BOX 77, MOROGORO. TANZANIA</text:p>
@@ -263,17 +269,42 @@ const Membership = () => {
     
     // Add club logo in the left top corner
     try {
+      // Create a canvas to convert SVG to PNG for PDF compatibility
       const logoImg = new Image()
+      logoImg.crossOrigin = 'anonymous'
       logoImg.src = '/images/club_logo.svg'
       
       // Wait for image to load
       await new Promise((resolve, reject) => {
-        logoImg.onload = resolve
-        logoImg.onerror = reject
+        logoImg.onload = () => {
+          try {
+            // Create a canvas to convert SVG to raster format
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            canvas.width = 120 // Higher resolution for better quality
+            canvas.height = 120
+            
+            // Draw image on canvas with white background
+            ctx.fillStyle = 'white'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            ctx.drawImage(logoImg, 0, 0, canvas.width, canvas.height)
+            
+            // Get base64 data URL
+            const dataURL = canvas.toDataURL('image/png')
+            
+            // Add logo to PDF (left top corner)
+            doc.addImage(dataURL, 'PNG', 10, 10, 30, 30)
+            resolve(true)
+          } catch (err) {
+            console.log('Error processing logo:', err)
+            resolve(false)
+          }
+        }
+        logoImg.onerror = () => {
+          console.log('Could not load logo image')
+          resolve(false)
+        }
       })
-      
-      // Add logo to PDF (left top corner)
-      doc.addImage(logoImg, 'SVG', 10, 10, 30, 30)
     } catch (error) {
       console.log('Could not load logo:', error)
     }
@@ -302,6 +333,75 @@ const Membership = () => {
     doc.setFont("helvetica", "normal")
     let yPos = 110
     
+    // Add user's uploaded photo if available (right side of page)
+    if (formData.picha) {
+      try {
+        const photoImg = new Image()
+        photoImg.src = URL.createObjectURL(formData.picha)
+        
+        await new Promise((resolve, reject) => {
+          photoImg.onload = () => {
+            try {
+              // Create canvas to process the uploaded photo
+              const canvas = document.createElement('canvas')
+              const ctx = canvas.getContext('2d')
+              canvas.width = 150
+              canvas.height = 200
+              
+              // Draw white background
+              ctx.fillStyle = 'white'
+              ctx.fillRect(0, 0, canvas.width, canvas.height)
+              
+              // Calculate dimensions to maintain aspect ratio
+              const imgAspect = photoImg.width / photoImg.height
+              const canvasAspect = canvas.width / canvas.height
+              
+              let drawWidth, drawHeight, offsetX, offsetY
+              
+              if (imgAspect > canvasAspect) {
+                // Image is wider than canvas
+                drawWidth = canvas.width
+                drawHeight = canvas.width / imgAspect
+                offsetX = 0
+                offsetY = (canvas.height - drawHeight) / 2
+              } else {
+                // Image is taller than canvas
+                drawWidth = canvas.height * imgAspect
+                drawHeight = canvas.height
+                offsetX = (canvas.width - drawWidth) / 2
+                offsetY = 0
+              }
+              
+              // Draw image centered
+              ctx.drawImage(photoImg, offsetX, offsetY, drawWidth, drawHeight)
+              
+              // Convert to base64
+              const photoDataURL = canvas.toDataURL('image/png')
+              
+              // Add photo to PDF (right side, adjusted size for passport photo)
+              doc.addImage(photoDataURL, 'PNG', 160, 110, 35, 47)
+              
+              // Add photo label
+              doc.setFontSize(8)
+              doc.text("Picha ya Mwombaji", 162, 162)
+              doc.setFontSize(11)
+              
+              resolve(true)
+            } catch (err) {
+              console.log('Error processing uploaded photo:', err)
+              resolve(false)
+            }
+          }
+          photoImg.onerror = () => {
+            console.log('Could not load uploaded photo')
+            resolve(false)
+          }
+        })
+      } catch (error) {
+        console.log('Error loading uploaded photo:', error)
+      }
+    }
+
     // Form data
     doc.text(`1.1 Jina la Mwombaji: ${formData.jinaLaMwombaji}`, 20, yPos)
     yPos += 10
