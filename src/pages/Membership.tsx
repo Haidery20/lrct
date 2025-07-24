@@ -284,7 +284,10 @@ const Membership = () => {
         logoImg.onload = () => {
           try {
             const canvas = document.createElement("canvas")
-            const ctx = canvas.getContext("2d")
+            const ctx = canvas.getContext("2d");
+            if (ctx === null) {
+              throw new Error("Unable to get 2D context");
+            }
             canvas.width = 120
             canvas.height = 120
 
@@ -335,7 +338,10 @@ const Membership = () => {
           photoImg.onload = () => {
             try {
               const canvas = document.createElement("canvas")
-              const ctx = canvas.getContext("2d")
+              const ctx = canvas.getContext("2d");
+              if (ctx === null) {
+                throw new Error("Unable to get 2D context");
+              }
               canvas.width = 150
               canvas.height = 200
 
@@ -649,7 +655,10 @@ const Membership = () => {
           idImg.onload = () => {
             try {
               const canvas = document.createElement("canvas")
-              const ctx = canvas.getContext("2d")
+              const ctx = canvas.getContext("2d");
+              if (ctx === null) {
+                throw new Error("Unable to get 2D context");
+              }
 
               const maxWidth = 400
               const maxHeight = 250
