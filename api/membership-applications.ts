@@ -6,8 +6,18 @@ import { z } from 'zod';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'POST') {
     try {
-      const validatedData = insertMembershipApplicationSchema.parse(req.body);
-      const application = await storage.createMembershipApplication(validatedData);
+      // Extract any provided reference number (from client-side reservation)
+      const { userReferenceNumber, ...applicationData } = req.body;
+      
+      // Validate the application data
+      const validatedData = insertMembershipApplicationSchema.parse(applicationData);
+      
+      // Create membership application (with optional user reference number)
+      const application = await storage.createMembershipApplication(
+        validatedData, 
+        userReferenceNumber
+      );
+      
       res.json(application);
     } catch (error) {
       if (error instanceof z.ZodError) {

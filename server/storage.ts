@@ -1,15 +1,23 @@
-import { users, membershipApplications, type User, type InsertUser, type MembershipApplication, type InsertMembershipApplication } from "@shared/schema";
+import {
+  users,
+  membershipApplications,
+  type User,
+  type InsertUser,
+  type MembershipApplication,
+  type InsertMembershipApplication,
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
-// modify the interface with any CRUD methods
-// you might need
-
+// Interface with proper return types
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  createMembershipApplication(insertApplication: InsertMembershipApplication): Promise<MembershipApplication>;
+  createMembershipApplication(
+    insertApplication: InsertMembershipApplication,
+    preferredRefNumber?: string
+  ): Promise<MembershipApplication>;
   getNextReferenceNumber(): Promise<string>;
 }
 
@@ -25,15 +33,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async getNextReferenceNumber(): Promise<string> {
-    // Get the latest application to determine the next reference number
     const [latestApp] = await db
       .select()
       .from(membershipApplications)
@@ -42,20 +46,21 @@ export class DatabaseStorage implements IStorage {
 
     let nextNumber = 1;
     if (latestApp) {
-      // Extract number from reference like "LRCT/Adm/001"
       const match = latestApp.referenceNumber.match(/LRCT\/Adm\/(\d+)/);
       if (match) {
         nextNumber = parseInt(match[1]) + 1;
       }
     }
 
-    // Format as 3-digit number with leading zeros
-    return `LRCT/Adm/${nextNumber.toString().padStart(3, '0')}`;
+    return `LRCT/Adm/${nextNumber.toString().padStart(3, "0")}`;
   }
 
-  async createMembershipApplication(insertApplication: InsertMembershipApplication): Promise<MembershipApplication> {
-    const referenceNumber = await this.getNextReferenceNumber();
-    
+  async createMembershipApplication(
+    insertApplication: InsertMembershipApplication,
+    preferredRefNumber?: string
+  ): Promise<MembershipApplication> {
+    const referenceNumber = preferredRefNumber || (await this.getNextReferenceNumber());
+
     const [application] = await db
       .insert(membershipApplications)
       .values({
@@ -63,7 +68,7 @@ export class DatabaseStorage implements IStorage {
         referenceNumber,
       })
       .returning();
-    
+
     return application;
   }
 }
