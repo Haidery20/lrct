@@ -53,12 +53,12 @@ const Header = () => {
 
             <nav className="hidden md:flex items-center space-x-8">
               {[
+                { name: 'About Us', path: '/about' },
+                { name: 'Membership', path: '/membership' },
                 { name: 'Festivals', path: '/festivals' },
                 { name: 'Events', path: '/events' },
-                { name: 'Membership', path: '/membership' },
                 { name: 'Gallery', path: '/gallery' },
-                { name: 'About', path: '/about' },
-                { name: 'Contact', path: '/#contact' }
+                { name: 'Contact Us', path: '/#contact' }
               ].map((item) => (
                 item.path.startsWith('/#') ? (
                   <a
@@ -111,12 +111,12 @@ const Header = () => {
             <div className="md:hidden bg-white shadow-lg rounded-lg mt-2 p-4">
               <nav className="flex flex-col space-y-4">
                 {[
-                  { name: 'About', path: '/about' },
+                  { name: 'About Us', path: '/about' },
                   { name: 'Membership', path: '/membership' },
-                  { name: 'Adventures', path: '/adventures' },
+                  { name: 'Festivals', path: '/festivals' },
                   { name: 'Events', path: '/events' },                  
                   { name: 'Gallery', path: '/gallery' },
-                  { name: 'Contact', path: '/#contact' }
+                  { name: 'Contact Us', path: '/#contact' }
                 ].map((item) => (
                   item.path.startsWith('/#') ? (
                     <a
