@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { Camera, MapPin, Calendar, Users, Play, X } from 'lucide-react';
 
@@ -157,19 +158,28 @@ const Gallery = () => {
   return (
     <div className="min-h-screen pt-20">
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-r from-green-600 to-emerald-600 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Camera className="h-16 w-16 mx-auto mb-6 text-white/80" />
-          <h1 className="text-5xl sm:text-6xl font-bold mb-6">
-            Adventure Gallery
-          </h1>
-          <p className="text-xl sm:text-2xl max-w-4xl mx-auto leading-relaxed opacity-90">
-            Explore our collection of unforgettable moments, breathtaking landscapes, 
-            and the spirit of adventure that defines our community.
-          </p>
-        </div>
-      </section>
+      <section className="relative h-[80vh] w-full overflow-hidden">
+  {/* Background Image */}
+  <img
+    src="/images/landrovers.avif"
+    alt="Gallery Hero"
+    className="absolute inset-0 w-full h-full object-cover object-center"
+  />
+
+  {/* Dark Overlay */}
+  <div className="absolute inset-0 bg-black/50" />
+
+  {/* Text Content */}
+  <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+    <Camera className="w-12 h-12 mb-4 text-white" />
+    <h1 className="text-4xl sm:text-6xl font-bold mb-4">Adventure Gallery</h1>
+    <p className="text-lg sm:text-xl max-w-2xl">
+      Explore our collection of unforgettable moments, breathtaking landscapes,
+      and the spirit of adventure that defines our community.
+    </p>
+  </div>
+</section>
+
 
       {/* Gallery Section */}
       <section className="py-20 bg-gray-50">

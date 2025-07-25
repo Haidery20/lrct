@@ -271,6 +271,39 @@ const Membership = () => {
     const currentDate = new Date().toLocaleDateString("sw-TZ")
     const doc = new jsPDF()
 
+    const requiredFields = [
+      formData.jinaLaMwombaji,
+      formData.tareheyaKuzaliwa,
+      formData.jinsia,
+      formData.anuaniKamili,
+      formData.slp,
+      formData.nambaYaSimu,
+      formData.baruaPepe,
+      formData.landRoverType,
+      formData.landRoverModel,
+      formData.wasifuWaMwombaji,
+      formData.umepatajeTaarifa,
+      formData.tamkoLaMwombaji,
+      formData.jinaLaMdhamini,
+      formData.anuaniYaMdhamini,
+      formData.slpYaMdhamini,
+      formData.nambaYaSimuYaMdhamini,
+      formData.malezoYaMdhamini,
+      formData.picha,
+      formData.kitambulisho,
+      formData.termsAccepted,
+    ]
+  
+    // Check for any missing values
+    const isComplete = requiredFields.every((field) =>
+      typeof field === "boolean" ? field === true : !!field
+    )
+  
+    if (!isComplete) {
+      alert("Tafadhali jaza sehemu zote muhimu kabla ya kupakua PDF.")
+      return
+    }
+
     // Set font
     doc.setFont("helvetica", "normal")
 
