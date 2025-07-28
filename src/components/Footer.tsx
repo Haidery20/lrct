@@ -1,4 +1,5 @@
 //
+import React from 'react';
 import { Compass, Facebook, Instagram, Twitter, Mail, Youtube } from 'lucide-react';
 
 const Footer = () => {

@@ -49,10 +49,13 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <button className="group bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
-              <span>Join Our Adventures</span>
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+          <button
+  className="group bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+  onClick={() => setLocation('/events')}
+>
+  <span>Join Our Adventures</span>
+  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+</button>
             <button className="border-2 border-white/30 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all duration-300"
               onClick={() => setLocation('/gallery')}>
               View Gallery

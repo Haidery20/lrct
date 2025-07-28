@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff, User, Mail, Lock, Phone, MapPin } from 'lucide-react';
 
