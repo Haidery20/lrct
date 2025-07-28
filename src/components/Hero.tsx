@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { ArrowRight, Mountain, Users, MapPin } from 'lucide-react';

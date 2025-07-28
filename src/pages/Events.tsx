@@ -1,5 +1,5 @@
 "use client"
-
+import React from 'react';
 import { useEffect, useRef, useState } from "react"
 import { Calendar, Clock, MapPin, Users, AlertTriangle, Timer } from "lucide-react"
 

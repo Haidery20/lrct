@@ -354,7 +354,7 @@ const Membership = () => {
     doc.setFont("helvetica", "normal")
     doc.text("P. O. BOX 77, MOROGORO. TANZANIA", 105, 28, { align: "center" })
     doc.text("TEL; +255 763 652 641/+255 718 133 333", 105, 34, { align: "center" })
-    doc.text("Email; landroverclubtz@gmail.com", 105, 40, { align: "center" })
+    doc.text("Email; info@landroverclub.or.tz", 105, 40, { align: "center" })
 
     // Reference and Date
     doc.setFontSize(11)
@@ -749,7 +749,7 @@ const Membership = () => {
 
     doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
-    doc.text("Maombi haya yatumwe kwa njia ya barua pepe ya Klabu: landroverclubtz@gmail.com", 20, yPos)
+    doc.text("Maombi haya yatumwe kwa njia ya barua pepe ya Klabu: info@landroverclub.or.tz", 20, yPos)
     yPos += 20
 
     // Generate QR Code with applicant information
@@ -787,7 +787,7 @@ const Membership = () => {
           name: "LAND ROVER CLUB TANZANIA",
           address: "P. O. BOX 77, MOROGORO. TANZANIA",
           phone: "+255 763 652 641/+255 718 133 333",
-          email: "landroverclubtz@gmail.com",
+          email: "info@landroverclub.or.tz",
         },
       }
 
@@ -959,7 +959,7 @@ const Membership = () => {
                 <h1 className="text-2xl font-bold text-gray-900">LAND ROVER CLUB TANZANIA</h1>
                 <p className="text-sm text-gray-600">P. O. BOX 77, MOROGORO. TANZANIA</p>
                 <p className="text-sm text-gray-600">TEL; +255 763 652 641/+255 718 133 333</p>
-                <p className="text-sm text-gray-600">Email; landroverclubtz@gmail.com</p>
+                <p className="text-sm text-gray-600">Email: info@landroverclub.or.tz</p>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>Kumb Na. {userReferenceNumber || "LRCT/Adm/..........."}</span>
@@ -1175,7 +1175,7 @@ const Membership = () => {
                       {/* NIDA/Passport Upload */}
                       <div>
                         <Label htmlFor="kitambulisho">
-                          Nakala ya Kitambulisho cha Taifa au Hati ya Kusafiria (BANDIKA PICHA) *
+                          Nakala ya Kadi ya Gari (BANDIKA PICHA) *
                         </Label>
                         <div className="mt-2 flex items-center gap-4">
                           <Input
