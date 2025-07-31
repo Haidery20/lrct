@@ -6,10 +6,10 @@ const Partners = () => {
         <h2 className="text-3xl font-bold text-gray-900 mb-8">Our Partners</h2>
         <div className="flex flex-wrap justify-center items-center gap-8">
           {[
-            { name: 'Partner 1', logo: '/images/partner1.png' },
-            { name: 'Partner 2', logo: '/images/partner2.png' },
-            { name: 'Partner 3', logo: '/images/partner3.png' },
-            { name: 'Partner 4', logo: '/images/partner4.png' },
+            { name: 'Partner 1', logo: '/images/partners/g4l.jpg' },
+            { name: 'Partner 2', logo: '/images/partners/samcare.avif' },
+            { name: 'Partner 3', logo: '/images/partners/afriroots.avif' },
+            { name: 'Partner 4', logo: '/images/partners/weibull.avif' },
             { name: 'Partner 5', logo: '/images/partner5.png' },
           ].map((partner, index) => (
             <div key={index} className="flex-shrink-0">

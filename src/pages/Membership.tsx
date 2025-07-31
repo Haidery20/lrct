@@ -269,45 +269,42 @@ const Membership = () => {
   // Generate PDF using jsPDF
   const generatePDF = async () => {
     const currentDate = new Date().toLocaleDateString("sw-TZ")
-    const doc = new jsPDF()
+    // Create PDF in portrait A4 format
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    })
 
-    const requiredFields = [
+    // Simplified validation - check only critical fields
+    // This allows users to generate PDF with basic information
+    const criticalFields = [
       formData.jinaLaMwombaji,
-      formData.tareheyaKuzaliwa,
-      formData.jinsia,
-      formData.anuaniKamili,
-      formData.slp,
       formData.nambaYaSimu,
       formData.baruaPepe,
-      formData.landRoverType,
-      formData.landRoverModel,
-      formData.wasifuWaMwombaji,
-      formData.umepatajeTaarifa,
-      formData.tamkoLaMwombaji,
-      formData.jinaLaMdhamini,
-      formData.anuaniYaMdhamini,
-      formData.slpYaMdhamini,
-      formData.nambaYaSimuYaMdhamini,
-      formData.malezoYaMdhamini,
-      formData.picha,
-      formData.kitambulisho,
+      // We still check for terms acceptance
       formData.termsAccepted,
     ]
   
-    // Check for any missing values
-    const isComplete = requiredFields.every((field) =>
+    // Check only the most critical values
+    const isComplete = criticalFields.every((field) =>
       typeof field === "boolean" ? field === true : !!field
     )
   
     if (!isComplete) {
-      alert("Tafadhali jaza sehemu zote muhimu kabla ya kupakua PDF.")
+      alert("Tafadhali jaza angalau jina lako na taarifa za mawasiliano kabla ya kupakua PDF.")
       return
     }
 
-    // Set font
+    // Set default font
     doc.setFont("helvetica", "normal")
+    
+    // Define page margins
+    const pageMargin = 15
 
-    // Add club logo in the left top corner
+    // ------------ HEADER SECTION ------------
+    
+    // Add club logo in the left top corner (increased size to match sample)
     try {
       const logoImg = new Image()
       logoImg.crossOrigin = "anonymous"
@@ -329,7 +326,8 @@ const Membership = () => {
             ctx.drawImage(logoImg, 0, 0, canvas.width, canvas.height)
 
             const dataURL = canvas.toDataURL("image/png")
-            doc.addImage(dataURL, "PNG", 10, 10, 30, 30)
+            // Increased logo size to match sample
+            doc.addImage(dataURL, "PNG", pageMargin, pageMargin, 35, 35)
             resolve(true)
           } catch (err) {
             console.log("Error processing logo:", err)
@@ -345,22 +343,45 @@ const Membership = () => {
       console.log("Could not load logo:", error)
     }
 
-    // Header
-    doc.setFontSize(18)
+    // Header - Title & Contact info
+    // Center text with more prominent formatting
+    doc.setFontSize(20)
     doc.setFont("helvetica", "bold")
-    doc.text("LAND ROVER CLUB TANZANIA", 105, 20, { align: "center" })
+    doc.text("LAND ROVER CLUB TANZANIA", 105, pageMargin + 10, { align: "center" })
 
     doc.setFontSize(12)
     doc.setFont("helvetica", "normal")
-    doc.text("P. O. BOX 77, MOROGORO. TANZANIA", 105, 28, { align: "center" })
-    doc.text("TEL; +255 763 652 641/+255 718 133 333", 105, 34, { align: "center" })
-    doc.text("Email; info@landroverclub.or.tz", 105, 40, { align: "center" })
+    doc.text("P. O. BOX 77, MOROGORO. TANZANIA", 105, pageMargin + 18, { align: "center" })
+    doc.text("TEL; +255 763 652 641/+255 718 133 333", 105, pageMargin + 24, { align: "center" })
+    doc.text("Email; info@landroverclub.or.tz", 105, pageMargin + 30, { align: "center" })
 
-    // Reference and Date
-    doc.setFontSize(11)
-    doc.text(`Kumb Na. ${userReferenceNumber}`, 20, 55)
-    doc.text(`Tarehe ${currentDate}`, 150, 55)
+    // Add horizontal line under header
+    doc.setDrawColor(0)
+    doc.setLineWidth(0.5)
+    doc.line(pageMargin, pageMargin + 40, 195, pageMargin + 40)
 
+    // Form title
+    doc.setFontSize(16)
+    doc.setFont("helvetica", "bold")
+    doc.text("FOMU YA KUJIUNGA NA UANACHAMA", 105, pageMargin + 50, { align: "center" })
+    
+    // Reference and Date with less spacing
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "normal")
+    doc.text(`Kumb Na. ${userReferenceNumber}`, pageMargin, pageMargin + 55)
+    doc.text(`Tarehe ${currentDate}`, 150, pageMargin + 55)
+
+    // Add photo frame regardless of whether photo is available
+    const photoFrameX = 150
+    const photoFrameY = pageMargin + 65
+    const photoWidth = 40
+    const photoHeight = 50
+    
+    // Draw photo frame border
+    doc.setDrawColor(0)
+    doc.setLineWidth(0.3)
+    doc.rect(photoFrameX, photoFrameY, photoWidth, photoHeight)
+    
     // Add user's uploaded photo if available (right side of page)
     if (formData.picha) {
       try {
@@ -401,11 +422,8 @@ const Membership = () => {
               ctx.drawImage(photoImg, offsetX, offsetY, drawWidth, drawHeight)
               const photoDataURL = canvas.toDataURL("image/png")
 
-              doc.addImage(photoDataURL, "PNG", 160, 65, 35, 47)
-              doc.setFontSize(8)
-              // Move caption slightly lower and ensure it's within photo bounds
-              doc.text("Picha ya Mwombaji", 160, 118)
-
+              // Place photo inside the frame
+              doc.addImage(photoDataURL, "PNG", photoFrameX, photoFrameY, photoWidth, photoHeight)
               resolve(true)
             } catch (err) {
               console.log("Error processing uploaded photo:", err)
@@ -418,212 +436,425 @@ const Membership = () => {
         console.log("Error loading uploaded photo:", error)
       }
     }
+    
+    // Add caption for photo frame
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "normal")
+    doc.text("Picha ya Mwombaji", photoFrameX + photoWidth/2, photoFrameY + photoHeight + 6, { align: "center" })
 
-    let yPos = 70
+    let yPos = pageMargin + 70
 
     // PART A: MAELEZO YA MWOMBAJI NA MDHAMINI
+    yPos = pageMargin + 85  // Further reduced starting position to prevent content overflow
+    
+    // Section title with background
+    doc.setFillColor(220, 220, 220) // Light gray background
+    doc.rect(pageMargin, yPos, 180, 8, 'F')
+    
     doc.setFontSize(14)
     doc.setFont("helvetica", "bold")
-    doc.text("A. MAELEZO YA MWOMBAJI NA MDHAMINI", 20, yPos)
-    yPos += 10
+    doc.text("A. MAELEZO YA MWOMBAJI NA MDHAMINI", pageMargin + 2, yPos + 6)
+    yPos += 15
 
     // Section 1: TAARIFA BINAFSI
     doc.setFontSize(12)
-    doc.text("1. TAARIFA BINAFSI", 20, yPos)
-    yPos += 8
+    doc.setFont("helvetica", "bold")
+    doc.text("1. TAARIFA BINAFSI", pageMargin, yPos)
+    yPos += 10
 
-    doc.setFontSize(10)
-    doc.setFont("helvetica", "normal")
-
+    doc.setFontSize(11)
+    
+    // Create consistent form layout with lines for input fields
+    const lineWidth = 130
+    const labelWidth = 55
+    
     // 1.1 Jina la Mwombaji
     doc.setFont("helvetica", "bold")
-    doc.text("1.1 Jina la Mwombaji: ", 20, yPos)
+    doc.text("1.1 Jina la Mwombaji: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.jinaLaMwombaji, 70, yPos)
-    yPos += 6
+    
+    // Draw line for input field
+    doc.setLineWidth(0.1)
+    doc.line(pageMargin + labelWidth, yPos, pageMargin + labelWidth + lineWidth, yPos)
+    
+    // Place text slightly above line
+    if (formData.jinaLaMwombaji) {
+      doc.text(formData.jinaLaMwombaji, pageMargin + labelWidth + 2, yPos - 1)
+    }
+    yPos += 8
 
     // 1.2 Tarehe ya Kuzaliwa
     doc.setFont("helvetica", "bold")
-    doc.text("1.2 Tarehe ya Kuzaliwa: ", 20, yPos)
+    doc.text("1.2 Tarehe ya Kuzaliwa: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.tareheyaKuzaliwa, 75, yPos)
-    yPos += 6
+    
+    // Draw line for input field
+    doc.line(pageMargin + labelWidth, yPos, pageMargin + labelWidth + lineWidth, yPos)
+    
+    if (formData.tareheyaKuzaliwa) {
+      doc.text(formData.tareheyaKuzaliwa, pageMargin + labelWidth + 2, yPos - 1)
+    }
+    yPos += 8
 
     // 1.3 Jinsia
     doc.setFont("helvetica", "bold")
-    doc.text("1.3 Jinsia: ", 20, yPos)
+    doc.text("1.3 Jinsia: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    const jinsiaText = formData.jinsia === "me" ? "Me ✓" : formData.jinsia === "ke" ? "Ke ✓" : ""
-    doc.text(jinsiaText, 50, yPos)
-    yPos += 6
+    
+    // Create checkbox style elements
+    const checkboxSize = 4
+    const checkboxGap = 5
+    
+    // Me checkbox
+    doc.rect(pageMargin + labelWidth, yPos - checkboxSize, checkboxSize, checkboxSize)
+    doc.text("Me", pageMargin + labelWidth + checkboxSize + 2, yPos)
+    
+    // Ke checkbox
+    doc.rect(pageMargin + labelWidth + 20, yPos - checkboxSize, checkboxSize, checkboxSize)
+    doc.text("Ke", pageMargin + labelWidth + 20 + checkboxSize + 2, yPos)
+    
+    // Mark the selected gender
+    if (formData.jinsia === "me") {
+      doc.text("✓", pageMargin + labelWidth + 1, yPos - 0.5)
+    } else if (formData.jinsia === "ke") {
+      doc.text("✓", pageMargin + labelWidth + 21, yPos - 0.5)
+    }
+    yPos += 8
 
     // 1.4 Anuani Kamili
     doc.setFont("helvetica", "bold")
-    doc.text("1.4 Anuani Kamili: S.L.P ", 20, yPos)
+    doc.text("1.4 Anuani Kamili: S.L.P ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.slp, 75, yPos)
-    yPos += 5
-    doc.text(formData.anuaniKamili, 20, yPos)
-    yPos += 6
-
-    // Contact Information - adjust positioning to avoid overlap with photo
-    doc.setFont("helvetica", "bold")
-    doc.text("Namba ya simu: ", 20, yPos)
-    doc.setFont("helvetica", "normal")
-    doc.text(formData.nambaYaSimu, 55, yPos)
-
-    // Check if there's a photo to avoid overlap
-    if (formData.picha) {
-      // If photo exists, put email on next line to avoid overlap
-      yPos += 6
-      doc.setFont("helvetica", "bold")
-      doc.text("Barua pepe: ", 20, yPos)
-      doc.setFont("helvetica", "normal")
-      // Limit email text width to avoid photo area
-      const emailText = doc.splitTextToSize(formData.baruaPepe, 130)
-      doc.text(emailText, 55, yPos)
-      yPos += emailText.length * 4 + 2
-    } else {
-      // If no photo, can use the full width
-      doc.setFont("helvetica", "bold")
-      doc.text("Barua pepe: ", 110, yPos)
-      doc.setFont("helvetica", "normal")
-      doc.text(formData.baruaPepe, 135, yPos)
-      yPos += 6
+    
+    // Draw line for S.L.P input
+    const slpLineWidth = 30
+    doc.line(pageMargin + labelWidth, yPos, pageMargin + labelWidth + slpLineWidth, yPos)
+    
+    if (formData.slp) {
+      doc.text(formData.slp, pageMargin + labelWidth + 2, yPos - 1)
     }
-    yPos += 2
+    yPos += 8
+    
+    // Draw longer line for address
+    doc.line(pageMargin, yPos, pageMargin + 180, yPos)
+    
+    if (formData.anuaniKamili) {
+      // Split address text if too long
+      const addressLines = doc.splitTextToSize(formData.anuaniKamili, 180)
+      doc.text(addressLines, pageMargin + 2, yPos - 1)
+    }
+    yPos += 8
+
+    // Contact Information
+    doc.setFont("helvetica", "bold")
+    doc.text("Namba ya simu: ", pageMargin, yPos)
+    doc.setFont("helvetica", "normal")
+    
+    // Draw line for phone input
+    doc.line(pageMargin + 35, yPos, pageMargin + 110, yPos)
+    
+    if (formData.nambaYaSimu) {
+      doc.text(formData.nambaYaSimu, pageMargin + 35 + 2, yPos - 1)
+    }
+    
+    // Email on same line
+    doc.setFont("helvetica", "bold")
+    doc.text("Barua pepe: ", pageMargin + 115, yPos)
+    doc.setFont("helvetica", "normal")
+    
+    // Draw line for email
+    doc.line(pageMargin + 145, yPos, pageMargin + 195, yPos)
+    
+    if (formData.baruaPepe) {
+      // Fit email text to available space
+      const maxEmailWidth = 45
+      const emailText = formData.baruaPepe.length > 25 ? 
+        formData.baruaPepe.substring(0, 23) + "..." : 
+        formData.baruaPepe
+      
+      doc.text(emailText, pageMargin + 145 + 2, yPos - 1)
+    }
+    yPos += 12
 
     // Land Rover Information
     doc.setFont("helvetica", "bold")
-    doc.text("Aina ya Land Rover: ", 20, yPos)
+    doc.text("Aina ya Land Rover: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
+    
+    // Draw line for vehicle type
+    doc.line(pageMargin + 45, yPos, pageMargin + 110, yPos)
+    
     const selectedType = landRoverTypes.find((type) => type.value === formData.landRoverType)
-    doc.text(selectedType?.label || "", 65, yPos)
+    if (selectedType?.label) {
+      doc.text(selectedType.label, pageMargin + 45 + 2, yPos - 1)
+    }
+    
     doc.setFont("helvetica", "bold")
-    doc.text("Mfano: ", 110, yPos)
+    doc.text("Mfano: ", pageMargin + 115, yPos)
     doc.setFont("helvetica", "normal")
+    
+    // Draw line for vehicle model
+    doc.line(pageMargin + 130, yPos, pageMargin + 180, yPos)
+    
     const selectedModel =
       formData.landRoverType &&
       landRoverModels[formData.landRoverType]?.find((model) => model.value === formData.landRoverModel)
-    doc.text(selectedModel?.label || "", 125, yPos)
-    yPos += 8
+    
+    if (selectedModel?.label) {
+      doc.text(selectedModel.label, pageMargin + 130 + 2, yPos - 1)
+    }
+    yPos += 12
 
     // 1.5 Wasifu wa mwombaji
     doc.setFont("helvetica", "bold")
-    doc.text("1.5 Wasifu wa mwombaji kwa ufupi:", 20, yPos)
+    doc.text("1.5 Wasifu wa mwombaji kwa ufupi:", pageMargin, yPos)
     yPos += 5
+    
+    // Draw multiline box for profile
+    const profileBoxHeight = 20
+    doc.rect(pageMargin, yPos, 180, profileBoxHeight)
+    
     doc.setFont("helvetica", "normal")
-    const wasifuLines = doc.splitTextToSize(formData.wasifuWaMwombaji, 170)
-    doc.text(wasifuLines, 20, yPos)
-    yPos += wasifuLines.length * 4 + 5
+    if (formData.wasifuWaMwombaji) {
+      const wasifuLines = doc.splitTextToSize(formData.wasifuWaMwombaji, 175)
+      doc.text(wasifuLines, pageMargin + 2, yPos + 5)
+    }
+    yPos += profileBoxHeight + 5
 
     // 1.6 Umepataje taarifa
     doc.setFont("helvetica", "bold")
-    doc.text("1.6 Umepataje taarifa za Tanzania Land Rover Club:", 20, yPos)
+    doc.text("1.6 Umepataje taarifa za Tanzania Land Rover Club:", pageMargin, yPos)
     yPos += 5
+    
+    // Draw multiline box for information source
+    const taarifaBoxHeight = 15
+    doc.rect(pageMargin, yPos, 180, taarifaBoxHeight)
+    
     doc.setFont("helvetica", "normal")
-    const taarifaLines = doc.splitTextToSize(formData.umepatajeTaarifa, 170)
-    doc.text(taarifaLines, 20, yPos)
-    yPos += taarifaLines.length * 4 + 8
+    if (formData.umepatajeTaarifa) {
+      const taarifaLines = doc.splitTextToSize(formData.umepatajeTaarifa, 175)
+      doc.text(taarifaLines, pageMargin + 2, yPos + 5)
+    }
+    yPos += taarifaBoxHeight + 8
+
+    // Check if we need a new page before Tamko la Mwombaji section
+    if (yPos > 210) {
+      doc.addPage()
+      yPos = pageMargin + 20
+    }
 
     // 1.7 Tamko la Mwombaji
     doc.setFont("helvetica", "bold")
-    doc.text("1.7 Tamko la Mwombaji kwa Club:", 20, yPos)
+    doc.text("1.7 Tamko la Mwombaji kwa Club:", pageMargin, yPos)
     yPos += 5
+    
+    // Draw multiline box for declaration with styling
+    const tamkoBoxHeight = 25
+    doc.setDrawColor(0)
+    doc.setFillColor(245, 245, 245) // Very light gray background for declaration
+    doc.rect(pageMargin, yPos, 180, tamkoBoxHeight, 'FD') // Fill and draw
+    
     doc.setFont("helvetica", "normal")
+    // Use formal declaration with applicant name
     const tamkoText = `Mimi ${formData.jinaLaMwombaji || "........................"} ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.`
-    const tamkoLines = doc.splitTextToSize(tamkoText, 170)
-    doc.text(tamkoLines, 20, yPos)
-    yPos += tamkoLines.length * 4 + 8
+    const tamkoLines = doc.splitTextToSize(tamkoText, 175)
+    doc.text(tamkoLines, pageMargin + 2, yPos + 5)
+    yPos += tamkoBoxHeight + 10
+    
+    // Add signature line for applicant
+    doc.setFont("helvetica", "bold") 
+    doc.text("Sahihi ya Mwombaji: ", pageMargin, yPos)
+    doc.line(pageMargin + 40, yPos, pageMargin + 100, yPos)
+    
+    doc.text("Tarehe: ", pageMargin + 110, yPos)
+    doc.line(pageMargin + 130, yPos, pageMargin + 180, yPos)
+    yPos += 15
 
-    // Section 2: MDHAMINI
+    // Check if we need a new page before MDHAMINI section
+    if (yPos > 210) {
+      doc.addPage()
+      yPos = pageMargin + 20
+    }
+
+    // Section 2: MDHAMINI with styled header
     doc.setFontSize(12)
+    doc.setFillColor(220, 220, 220) // Light gray background
+    doc.rect(pageMargin, yPos, 180, 7, 'F')
     doc.setFont("helvetica", "bold")
-    doc.text("2. MDHAMINI", 20, yPos)
-    yPos += 8
+    doc.text("2. MDHAMINI", pageMargin + 2, yPos + 5)
+    yPos += 12
 
-    doc.setFontSize(10)
+    doc.setFontSize(11)
     doc.setFont("helvetica", "normal")
+
+    // Check if we need a new page before sections 2.1-2.3
+    if (yPos > 210) {
+      doc.addPage()
+      yPos = pageMargin + 20
+    }
 
     // 2.1 Jina la Mdhamini
     doc.setFont("helvetica", "bold")
-    doc.text("2.1 Jina la Mdhamini: ", 20, yPos)
+    doc.text("2.1 Jina la Mdhamini: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.jinaLaMdhamini, 70, yPos)
-    yPos += 6
+    
+    // Draw line for guarantor name
+    doc.line(pageMargin + labelWidth, yPos, pageMargin + labelWidth + lineWidth, yPos)
+    
+    if (formData.jinaLaMdhamini) {
+      doc.text(formData.jinaLaMdhamini, pageMargin + labelWidth + 2, yPos - 1)
+    }
+    yPos += 8
 
     // 2.2 Anuani ya Mdhamini
     doc.setFont("helvetica", "bold")
-    doc.text("2.2 Anuani kamili; S.L.P: ", 20, yPos)
+    doc.text("2.2 Anuani kamili; S.L.P: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.slpYaMdhamini, 80, yPos)
-    yPos += 5
-    doc.text(formData.anuaniYaMdhamini, 20, yPos)
-    yPos += 6
+    
+    // Draw line for guarantor PO Box
+    doc.line(pageMargin + labelWidth + 15, yPos, pageMargin + labelWidth + 50, yPos)
+    
+    if (formData.slpYaMdhamini) {
+      doc.text(formData.slpYaMdhamini, pageMargin + labelWidth + 17, yPos - 1)
+    }
+    yPos += 8
+    
+    // Draw line for guarantor's full address
+    doc.line(pageMargin, yPos, pageMargin + 180, yPos)
+    
+    if (formData.anuaniYaMdhamini) {
+      doc.text(formData.anuaniYaMdhamini, pageMargin + 2, yPos - 1)
+    }
+    yPos += 8
 
     // Mdhamini Contact
     doc.setFont("helvetica", "bold")
-    doc.text("Namba ya simu: ", 20, yPos)
+    doc.text("Namba ya simu: ", pageMargin, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.nambaYaSimuYaMdhamini, 55, yPos)
+    
+    // Draw line for guarantor phone
+    doc.line(pageMargin + 35, yPos, pageMargin + 110, yPos)
+    
+    if (formData.nambaYaSimuYaMdhamini) {
+      doc.text(formData.nambaYaSimuYaMdhamini, pageMargin + 35 + 2, yPos - 1)
+    }
+    
     doc.setFont("helvetica", "bold")
-    doc.text("Barua pepe: ", 110, yPos)
+    doc.text("Barua pepe: ", pageMargin + 115, yPos)
     doc.setFont("helvetica", "normal")
-    doc.text(formData.baruaPepeYaMdhamini, 135, yPos)
-    yPos += 8
+    
+    // Draw line for guarantor email
+    doc.line(pageMargin + 145, yPos, pageMargin + 195, yPos)
+    
+    if (formData.baruaPepeYaMdhamini) {
+      const maxEmailWidth = 45
+      const emailText = formData.baruaPepeYaMdhamini.length > 25 ? 
+        formData.baruaPepeYaMdhamini.substring(0, 23) + "..." : 
+        formData.baruaPepeYaMdhamini
+      
+      doc.text(emailText, pageMargin + 145 + 2, yPos - 1)
+    }
+    yPos += 12
+
+    // Check if we need a new page before section 2.3
+    if (yPos > 230) {
+      doc.addPage()
+      yPos = pageMargin + 20
+    }
 
     // 2.3 Maelezo ya mdhamini
     doc.setFont("helvetica", "bold")
-    doc.text("2.3 Maelezo ya mdhamini kwa mdhaminiwa:", 20, yPos)
+    doc.text("2.3 Maelezo ya mdhamini kwa mdhaminiwa:", pageMargin, yPos)
     yPos += 5
+    
+    // Draw box for guarantor comments
+    const malezoBoxHeight = 20
+    doc.rect(pageMargin, yPos, 180, malezoBoxHeight)
+    
     doc.setFont("helvetica", "normal")
-    const malezoLines = doc.splitTextToSize(formData.malezoYaMdhamini, 170)
-    doc.text(malezoLines, 20, yPos)
-    yPos += malezoLines.length * 4 + 5
+    if (formData.malezoYaMdhamini) {
+      const malezoLines = doc.splitTextToSize(formData.malezoYaMdhamini, 175)
+      doc.text(malezoLines, pageMargin + 2, yPos + 5)
+    }
+    yPos += malezoBoxHeight + 8
 
     // 2.4 Sahihi ya Mdhamini
     doc.setFont("helvetica", "bold")
-    doc.text("2.4 Sahihi ya Mdhamini .................. ", 20, yPos)
-    doc.text(`Tarehe ${currentDate}`, 120, yPos)
-    yPos += 10
+    doc.text("2.4 Sahihi ya Mdhamini: ", pageMargin, yPos)
+    doc.line(pageMargin + 45, yPos, pageMargin + 100, yPos)
+    
+    doc.text("Tarehe: ", pageMargin + 110, yPos)
+    doc.text(currentDate, pageMargin + 130, yPos)
+    yPos += 15
 
-    // Force new page for Part B
-    doc.addPage()
-    yPos = 20
+    // Check if we need a new page for Part B
+    if (yPos > 250) {
+      // Force new page for Part B
+      doc.addPage()
+      yPos = pageMargin + 10
+    }
 
-    // PART B: MASHARTI YA KUJIUNGA
+    // PART B: MASHARTI YA KUJIUNGA with styled header
     doc.setFontSize(14)
+    doc.setFillColor(220, 220, 220) // Light gray background
+    doc.rect(pageMargin, yPos, 180, 8, 'F')
     doc.setFont("helvetica", "bold")
-    doc.text("B. MASHARTI YA KUJIUNGA", 20, yPos)
-    yPos += 10
+    doc.text("B. MASHARTI YA KUJIUNGA", pageMargin + 2, yPos + 6)
+    yPos += 15
 
     doc.setFontSize(12)
-    doc.text("3. ADA NA MICHANGO", 20, yPos)
+    doc.setFont("helvetica", "bold")
+    doc.text("3. ADA NA MICHANGO", pageMargin, yPos)
     yPos += 10
 
-    // Create table for contributions
-    doc.setFontSize(9)
+    // Create table for contributions with improved styling
+    doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
 
-    // Table headers
+    // Table headers with proper spacing
     const tableStartY = yPos
-    const colWidths = [15, 60, 30, 85]
-    const rowHeight = 8
+    const colWidths = [15, 65, 30, 70]
+    const rowHeight = 10
+    const tableBorderWidth = 0.3
+    
+    // Set consistent styling for table
+    doc.setDrawColor(0)
+    doc.setLineWidth(tableBorderWidth)
+    
+    // Draw table outer border
+    const tableWidth = colWidths.reduce((a, b) => a + b, 0)
+    
+    // Draw table header row with fill
+    doc.setFillColor(230, 230, 230) // Light gray for header
+    doc.rect(pageMargin, tableStartY, tableWidth, rowHeight, 'F')
+    
+    // Draw column separators in header
+    let xPos = pageMargin
+    doc.line(xPos, tableStartY, xPos, tableStartY + rowHeight)
+    
+    xPos += colWidths[0]
+    doc.line(xPos, tableStartY, xPos, tableStartY + rowHeight)
+    
+    xPos += colWidths[1]
+    doc.line(xPos, tableStartY, xPos, tableStartY + rowHeight)
+    
+    xPos += colWidths[2]
+    doc.line(xPos, tableStartY, xPos, tableStartY + rowHeight)
+    
+    doc.line(pageMargin + tableWidth, tableStartY, pageMargin + tableWidth, tableStartY + rowHeight)
+    
+    // Top and bottom lines of header
+    doc.line(pageMargin, tableStartY, pageMargin + tableWidth, tableStartY)
+    doc.line(pageMargin, tableStartY + rowHeight, pageMargin + tableWidth, tableStartY + rowHeight)
 
-    // Draw table borders and headers
+    // Header text - bold and centered in cells
     doc.setFont("helvetica", "bold")
-    doc.rect(20, tableStartY, colWidths[0], rowHeight) // Na.
-    doc.rect(20 + colWidths[0], tableStartY, colWidths[1], rowHeight) // Aina ya Malipo
-    doc.rect(20 + colWidths[0] + colWidths[1], tableStartY, colWidths[2], rowHeight) // Kiwango
-    doc.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], tableStartY, colWidths[3], rowHeight) // Maelezo
+    doc.text("Na.", pageMargin + colWidths[0]/2, tableStartY + rowHeight - 3, { align: "center" })
+    doc.text("Aina ya Malipo", pageMargin + colWidths[0] + colWidths[1]/2, tableStartY + rowHeight - 3, { align: "center" })
+    doc.text("Kiwango Tsh", pageMargin + colWidths[0] + colWidths[1] + colWidths[2]/2, tableStartY + rowHeight - 3, { align: "center" })
+    doc.text("Maelezo", pageMargin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]/2, tableStartY + rowHeight - 3, { align: "center" })
 
-    // Header text
-    doc.text("Na.", 22, tableStartY + 5)
-    doc.text("Aina ya Malipo", 22 + colWidths[0], tableStartY + 5)
-    doc.text("Kiwango Tsh", 22 + colWidths[0] + colWidths[1], tableStartY + 5)
-    doc.text("Maelezo", 22 + colWidths[0] + colWidths[1] + colWidths[2], tableStartY + 5)
-
-    // Table data
+    // Table data with more professional appearance
     const tableData = [
       ["1", "Malipo ya Fomu", "50,000/-", "Inalipwa mara moja wakati wa kuchukua fomu"],
       ["2", "Ada ya Kiingilio kwa Mwombaji", "60,000/-", "Inalipwa mara moja tu (Wakati wa kujiunga na Klabu)"],
@@ -640,31 +871,51 @@ const Membership = () => {
     let currentY = tableStartY + rowHeight
 
     tableData.forEach((row, index) => {
-      const cellHeight = Math.max(rowHeight, Math.ceil(row[3].length / 40) * 4 + 4)
+      const cellHeight = Math.max(rowHeight, Math.ceil(row[3].length / 30) * 4 + 5)
 
-      // Draw cell borders
-      doc.rect(20, currentY, colWidths[0], cellHeight)
-      doc.rect(20 + colWidths[0], currentY, colWidths[1], cellHeight)
-      doc.rect(20 + colWidths[0] + colWidths[1], currentY, colWidths[2], cellHeight)
-      doc.rect(20 + colWidths[0] + colWidths[1] + colWidths[2], currentY, colWidths[3], cellHeight)
+      // Draw table rows with alternating background color for better readability
+      if (index % 2 === 1) {
+        doc.setFillColor(245, 245, 245) // Very light gray for alternating rows
+        doc.rect(pageMargin, currentY, tableWidth, cellHeight, 'F')
+      }
 
-      // Add cell content
-      doc.text(row[0], 22, currentY + 5)
+      // Draw cell vertical borders
+      let xPos = pageMargin
+      doc.line(xPos, currentY, xPos, currentY + cellHeight)
+      
+      xPos += colWidths[0]
+      doc.line(xPos, currentY, xPos, currentY + cellHeight)
+      
+      xPos += colWidths[1]
+      doc.line(xPos, currentY, xPos, currentY + cellHeight)
+      
+      xPos += colWidths[2]
+      doc.line(xPos, currentY, xPos, currentY + cellHeight)
+      
+      doc.line(pageMargin + tableWidth, currentY, pageMargin + tableWidth, currentY + cellHeight)
+      
+      // Draw bottom line of row
+      doc.line(pageMargin, currentY + cellHeight, pageMargin + tableWidth, currentY + cellHeight)
 
-      // Handle multi-line text for "Aina ya Malipo"
-      const ainaLines = doc.splitTextToSize(row[1], colWidths[1] - 4)
-      doc.text(ainaLines, 22 + colWidths[0], currentY + 5)
+      // Add cell content with proper centering and alignment
+      // Center the number in first column
+      doc.text(row[0], pageMargin + colWidths[0]/2, currentY + 6, { align: "center" })
 
-      doc.text(row[2], 22 + colWidths[0] + colWidths[1], currentY + 5)
+      // Left align multi-line text for "Aina ya Malipo" with proper padding
+      const ainaLines = doc.splitTextToSize(row[1], colWidths[1] - 6)
+      doc.text(ainaLines, pageMargin + colWidths[0] + 3, currentY + 6)
 
-      // Handle multi-line text for "Maelezo"
-      const malezoTableLines = doc.splitTextToSize(row[3], colWidths[3] - 4)
-      doc.text(malezoTableLines, 22 + colWidths[0] + colWidths[1] + colWidths[2], currentY + 5)
+      // Right align the amount for better readability
+      doc.text(row[2], pageMargin + colWidths[0] + colWidths[1] + colWidths[2] - 3, currentY + 6, { align: "right" })
+
+      // Left align multi-line text for "Maelezo" with proper padding
+      const malezoTableLines = doc.splitTextToSize(row[3], colWidths[3] - 6)
+      doc.text(malezoTableLines, pageMargin + colWidths[0] + colWidths[1] + colWidths[2] + 3, currentY + 6)
 
       currentY += cellHeight
     })
 
-    yPos = currentY + 10
+    yPos = currentY + 15
 
     // Important note
     doc.setFontSize(10)
@@ -800,30 +1051,37 @@ const Membership = () => {
         },
       })
 
-      // Check if we need a new page for QR code
-      if (yPos > 200) {
+      // Always add QR code on the last page
+      // Get total page count
+      const pageCount = doc.getNumberOfPages()
+      
+      // Go to last page
+      doc.setPage(pageCount)
+      
+      // Make sure we have enough space at bottom of page, if not add a new page
+      if (yPos > 240) {
         doc.addPage()
-        yPos = 30
       }
-
-      // Add QR code section with proper spacing and centering
-      doc.setFontSize(12)
+      
+      // Position the QR code at bottom left of the last page
+      const qrSize = 35 // Reduced size
+      const qrXPos = pageMargin
+      const qrYPos = 260 - qrSize // Position from bottom
+      
+      // Add small header above QR code
+      doc.setFontSize(10)
       doc.setFont("helvetica", "bold")
-      doc.text("QR Code ya Taarifa za Mwombaji", 105, yPos, { align: "center" })
-      yPos += 15
-
-      // Center the QR code
-      const qrSize = 50
-      const qrXPos = (210 - qrSize) / 2
-      doc.addImage(qrCodeDataURL, "PNG", qrXPos, yPos, qrSize, qrSize)
-      yPos += qrSize + 10
-
-      // Add QR code description
-      doc.setFontSize(9)
+      doc.text("QR Code ya Taarifa za Mwombaji", qrXPos, qrYPos - 5)
+      
+      // Add QR code
+      doc.addImage(qrCodeDataURL, "PNG", qrXPos, qrYPos, qrSize, qrSize)
+      
+      // Add QR code description to the right of the code
+      doc.setFontSize(8)
       doc.setFont("helvetica", "normal")
-      doc.text("Scan QR code hii kupata taarifa kamili za mwombaji", 105, yPos, { align: "center" })
-      yPos += 8
-      doc.text("(Tumia simu yako kupiga picha ya QR code)", 105, yPos, { align: "center" })
+      doc.text("Scan QR code hii kupata taarifa", qrXPos + qrSize + 5, qrYPos + 10)
+      doc.text("kamili za mwombaji", qrXPos + qrSize + 5, qrYPos + 15)
+      doc.text("(Tumia simu yako kupiga picha ya QR code)", qrXPos + qrSize + 5, qrYPos + 20)
     } catch (error) {
       console.log("Error generating QR code:", error)
     }

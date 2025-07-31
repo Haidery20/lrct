@@ -65,7 +65,7 @@ const About = () => {
     {
       name: 'Laban Singoye',
       title: 'Secretary General',
-      image: '/images/asha.jpg'
+      image: '/images/laban.jpg'
     },
     {
       name: 'Fredrick Mbuya',
