@@ -121,6 +121,35 @@ const Membership = () => {
       declarationText:
         "ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.",
       acceptTerms: "Ninakubali tamko hili na masharti yote ya kujiunga na klabu",
+
+      // PDF-specific translations
+      pdf: {
+        applicantPhoto: "PICHA YA MWOMBAJI",
+        referenceNumber: "Kumb Na.",
+        date: "Tarehe",
+        applicantSignature: "Sahihi ya Mwombaji:",
+        guarantorSignature: "Sahihi ya Mdhamini:",
+        important: "Muhimu:",
+        finalInstructions: "Maelekezo ya Mwisho:",
+        qrCodeLabel: "QR Code ya Taarifa za Mwombaji",
+        qrCodeDescription: "Scan QR code hii kupata taarifa kamili za mwombaji",
+        qrCodeInstruction: "(Tumia simu yako kupiga picha ya QR code)",
+        idDocumentLabel: "Kitambulisho/Hati ya Kusafiria:",
+        emailInstruction: "Maombi haya yatumwe kwa njia ya barua pepe ya Klabu: info@landroverclub.or.tz",
+        importantNote: "Mwanaklabu atatakiwa kulipa michango hii ndani ya siku 14 (kumi na nne) tangia tarehe ya kukubaliwa kuwa mjumbe wa Klabu. Utaratibu wa malipo ya ada na michango utaelekezwa katika barua ya kukubaliwa.",
+        tableHeaders: {
+          number: "Na.",
+          paymentType: "Aina ya Malipo",
+          amount: "Kiwango Tsh",
+          description: "Maelezo"
+        },
+        feeStructure: [
+          ["1", "Malipo ya Fomu", "50,000/-", "Inalipwa mara moja wakati wa kuchukua fomu"],
+          ["2", "Ada ya Kiingilio kwa Mwombaji", "60,000/-", "Inalipwa mara moja tu (Wakati wa kujiunga na Klabu)"],
+          ["3", "Ada ya mwezi", "15,000/-", "Inalipwa kila mwezi (Kati ya Tarehe 1 hadi 5 ya Mwezi)"],
+          ["4", "Michango mbali mbali (Kama Msiba, maradhi, Sare, n.k)", "50,000/-", "Inaweza kulipwa pamoja na ada ya Kiingilio kwa mwanaklabu anaejiunga ama kati ya mwezi Januari na Juni kwa mwanaklabu aliyekwisha jiunga"]
+        ]
+      }
     },
     en: {
       // Header
@@ -187,6 +216,35 @@ const Membership = () => {
       declarationText:
         "hereby apply to join the Tanzania Land Rover Club, I promise to be faithful and fulfill all the conditions contained in the Constitution, Rules and Procedures of the Club if my application is accepted. I acknowledge that all the information I have written in this form is true and correct.",
       acceptTerms: "I accept this declaration and all terms of joining the club",
+
+      // PDF-specific translations
+      pdf: {
+        applicantPhoto: "APPLICANT PHOTO",
+        referenceNumber: "Ref No.",
+        date: "Date",
+        applicantSignature: "Applicant Signature:",
+        guarantorSignature: "Guarantor Signature:",
+        important: "Important:",
+        finalInstructions: "Final Instructions:",
+        qrCodeLabel: "Applicant Information QR Code",
+        qrCodeDescription: "Scan this QR code to get complete applicant information",
+        qrCodeInstruction: "(Use your phone to scan the QR code)",
+        idDocumentLabel: "ID Document/Passport:",
+        emailInstruction: "Submit this application via club email: info@landroverclub.or.tz",
+        importantNote: "The member will be required to pay these contributions within 14 days from the date of acceptance as a club member. Payment procedures for fees and contributions will be outlined in the acceptance letter.",
+        tableHeaders: {
+          number: "No.",
+          paymentType: "Payment Type",
+          amount: "Amount TSh",
+          description: "Description"
+        },
+        feeStructure: [
+          ["1", "Form Payment", "50,000/-", "Paid once when collecting the form"],
+          ["2", "Entrance Fee for Applicant", "60,000/-", "Paid once only (When joining the Club)"],
+          ["3", "Monthly Fee", "15,000/-", "Paid monthly (Between 1st and 5th of the month)"],
+          ["4", "Various Contributions (Such as bereavement, illness, uniform, etc.)", "50,000/-", "Can be paid together with entrance fee for new members or between January and June for existing members"]
+        ]
+      }
     },
   }
 
@@ -489,15 +547,31 @@ const Membership = () => {
       // Load the club logo from your images folder
       const logoImg = new Image()
       logoImg.crossOrigin = "anonymous"
-      logoImg.src = "/images/lrct-logo.png" // Path to your logo
+      logoImg.src = "/images/club_logo.svg" // Path to your logo
 
       await new Promise((resolve, reject) => {
         logoImg.onload = () => {
           try {
-            // Add logo to PDF - positioned on the left side
+            // Convert SVG to canvas for PDF compatibility
+            const canvas = document.createElement("canvas")
+            const ctx = canvas.getContext("2d")
+            if (!ctx) throw new Error("Unable to get 2D context")
+
             const logoWidth = 30
             const logoHeight = 30
-            doc.addImage(logoImg, "PNG", pageMargin, pageMargin, logoWidth, logoHeight)
+            canvas.width = logoWidth * 2 // Higher resolution
+            canvas.height = logoHeight * 2
+
+            // Fill with white background
+            ctx.fillStyle = "white"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+            // Draw the SVG logo
+            ctx.drawImage(logoImg, 0, 0, canvas.width, canvas.height)
+            const logoDataURL = canvas.toDataURL("image/PNG", 1.0)
+
+            // Add logo to PDF - positioned on the left side
+            doc.addImage(logoDataURL, "PNG", pageMargin, pageMargin, logoWidth, logoHeight)
             resolve(true)
           } catch (err) {
             console.log("Error adding logo to PDF:", err)
@@ -540,7 +614,7 @@ const Membership = () => {
     // Header - Title & Contact info (positioned to the right of logo)
     doc.setFontSize(20)
     doc.setFont("helvetica", "bold")
-    doc.text("LAND ROVER CLUB TANZANIA", 105, pageMargin + 10, { align: "center" })
+    doc.text(t.clubName, 105, pageMargin + 10, { align: "center" })
 
     doc.setFontSize(12)
     doc.setFont("helvetica", "normal")
@@ -556,13 +630,13 @@ const Membership = () => {
     // Form title
     doc.setFontSize(16)
     doc.setFont("helvetica", "bold")
-    doc.text("FOMU YA KUJIUNGA NA UANACHAMA", 105, pageMargin + 50, { align: "center" })
+    doc.text(t.formTitle, 105, pageMargin + 50, { align: "center" })
 
     // Reference and Date
     doc.setFontSize(12)
     doc.setFont("helvetica", "normal")
-    doc.text(`Kumb Na. ${userReferenceNumber}`, pageMargin, pageMargin + 60)
-    doc.text(`Tarehe ${currentDate}`, 150, pageMargin + 60)
+    doc.text(`${t.pdf.referenceNumber} ${userReferenceNumber}`, pageMargin, pageMargin + 60)
+    doc.text(`${t.pdf.date} ${currentDate}`, 150, pageMargin + 60)
 
     // Add photo frame
     const pageWidth = doc.internal.pageSize.getWidth()
@@ -574,7 +648,7 @@ const Membership = () => {
     // Label for photo
     doc.setFont("helvetica", "bold")
     doc.setFontSize(10)
-    doc.text("PICHA YA MWOMBAJI", photoFrameX + photoWidth / 2, photoFrameY - 5, { align: "center" })
+    doc.text(t.pdf.applicantPhoto, photoFrameX + photoWidth / 2, photoFrameY - 5, { align: "center" })
     doc.setFont("helvetica", "normal")
     doc.setFontSize(11)
 
@@ -645,13 +719,13 @@ const Membership = () => {
 
     doc.setFontSize(14)
     doc.setFont("helvetica", "bold")
-    doc.text("A. MAELEZO YA MWOMBAJI NA MDHAMINI", pageMargin + 2, yPos + 6)
+    doc.text(`A. ${t.applicantInfo}`, pageMargin + 2, yPos + 6)
     yPos += 15
 
     // Section 1: TAARIFA BINAFSI
     doc.setFontSize(12)
     doc.setFont("helvetica", "bold")
-    doc.text("1. TAARIFA BINAFSI", pageMargin, yPos)
+    doc.text(`1. ${t.personalInfo}`, pageMargin, yPos)
     yPos += 10
 
     doc.setFontSize(11)
@@ -676,23 +750,23 @@ const Membership = () => {
     }
 
     // Add all form fields with complete data
-    yPos = addFormField("1.1 Jina la Mwombaji: ", formData.jinaLaMwombaji, yPos)
-    yPos = addFormField("1.2 Tarehe ya Kuzaliwa: ", formData.tareheyaKuzaliwa, yPos)
+    yPos = addFormField(`1.1 ${t.applicantName}: `, formData.jinaLaMwombaji, yPos)
+    yPos = addFormField(`1.2 ${t.dateOfBirth}: `, formData.tareheyaKuzaliwa, yPos)
 
     // Gender with checkboxes
     doc.setFont("helvetica", "bold")
-    doc.text("1.3 Jinsia: ", pageMargin, yPos)
+    doc.text(`1.3 ${t.gender}: `, pageMargin, yPos)
     doc.setFont("helvetica", "normal")
 
     const checkboxSize = 4
 
     // Me checkbox
     doc.rect(pageMargin + labelWidth, yPos - checkboxSize, checkboxSize, checkboxSize)
-    doc.text("Me", pageMargin + labelWidth + checkboxSize + 2, yPos)
+    doc.text(t.male, pageMargin + labelWidth + checkboxSize + 2, yPos)
 
     // Ke checkbox
     doc.rect(pageMargin + labelWidth + 25, yPos - checkboxSize, checkboxSize, checkboxSize)
-    doc.text("Ke", pageMargin + labelWidth + 25 + checkboxSize + 2, yPos)
+    doc.text(t.female, pageMargin + labelWidth + 25 + checkboxSize + 2, yPos)
 
     // Mark the selected gender with a proper checkmark
     if (formData.jinsia === "me") {
@@ -708,7 +782,7 @@ const Membership = () => {
 
     // Address fields
     doc.setFont("helvetica", "bold")
-    doc.text("1.4 Anuani Kamili: S.L.P ", pageMargin, yPos)
+    doc.text(`1.4 ${t.fullAddress}: ${t.poBox} `, pageMargin, yPos)
     doc.setFont("helvetica", "normal")
 
     const slpLineWidth = 30
@@ -729,7 +803,7 @@ const Membership = () => {
 
     // Contact Information
     doc.setFont("helvetica", "bold")
-    doc.text("Namba ya simu: ", pageMargin, yPos)
+    doc.text(`${t.phoneNumber}: `, pageMargin, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + 35, yPos, pageMargin + 110, yPos)
@@ -739,7 +813,7 @@ const Membership = () => {
     }
 
     doc.setFont("helvetica", "bold")
-    doc.text("Barua pepe: ", pageMargin + 115, yPos)
+    doc.text(`${t.email}: `, pageMargin + 115, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + 145, yPos, pageMargin + 195, yPos)
@@ -754,7 +828,7 @@ const Membership = () => {
 
     // Land Rover Information
     doc.setFont("helvetica", "bold")
-    doc.text("Aina ya Land Rover: ", pageMargin, yPos)
+    doc.text(`${t.landRoverType}: `, pageMargin, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + 45, yPos, pageMargin + 110, yPos)
@@ -765,7 +839,7 @@ const Membership = () => {
     }
 
     doc.setFont("helvetica", "bold")
-    doc.text("Mfano: ", pageMargin + 115, yPos)
+    doc.text(`${t.landRoverModel}: `, pageMargin + 115, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + 130, yPos, pageMargin + 180, yPos)
@@ -781,7 +855,7 @@ const Membership = () => {
 
     // Profile section
     doc.setFont("helvetica", "bold")
-    doc.text("1.5 Wasifu wa mwombaji kwa ufupi:", pageMargin, yPos)
+    doc.text(`1.5 ${t.applicantProfile}:`, pageMargin, yPos)
     yPos += 5
 
     const profileBoxHeight = 20
@@ -796,7 +870,7 @@ const Membership = () => {
 
     // Information source
     doc.setFont("helvetica", "bold")
-    doc.text("1.6 Umepataje taarifa za Tanzania Land Rover Club:", pageMargin, yPos)
+    doc.text(`1.6 ${t.howHeardAbout}:`, pageMargin, yPos)
     yPos += 5
 
     const taarifaBoxHeight = 15
@@ -811,7 +885,7 @@ const Membership = () => {
 
     // Declaration
     doc.setFont("helvetica", "bold")
-    doc.text("1.7 Tamko la Mwombaji kwa Club:", pageMargin, yPos)
+    doc.text(`1.7 ${t.declaration}:`, pageMargin, yPos)
     yPos += 5
 
     const tamkoBoxHeight = 25
@@ -820,17 +894,17 @@ const Membership = () => {
     doc.rect(pageMargin, yPos, 180, tamkoBoxHeight, "FD")
 
     doc.setFont("helvetica", "normal")
-    const tamkoText = `Mimi ${formData.jinaLaMwombaji || "........................"} ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.`
+    const tamkoText = `${language === "sw" ? "Mimi" : "I"} ${formData.jinaLaMwombaji || "........................"} ${t.declarationText}`
     const tamkoLines = doc.splitTextToSize(tamkoText, 175)
     doc.text(tamkoLines, pageMargin + 2, yPos + 5)
     yPos += tamkoBoxHeight + 10
 
     // Signature lines
     doc.setFont("helvetica", "bold")
-    doc.text("Sahihi ya Mwombaji: ", pageMargin, yPos)
+    doc.text(`${t.pdf.applicantSignature} `, pageMargin, yPos)
     doc.line(pageMargin + 40, yPos, pageMargin + 100, yPos)
 
-    doc.text("Tarehe: ", pageMargin + 110, yPos)
+    doc.text(`${t.pdf.date}: `, pageMargin + 110, yPos)
     doc.line(pageMargin + 130, yPos, pageMargin + 180, yPos)
     doc.text(currentDate, pageMargin + 132, yPos - 1)
     yPos += 15
@@ -840,18 +914,18 @@ const Membership = () => {
     doc.setFillColor(220, 220, 220)
     doc.rect(pageMargin, yPos, 180, 7, "F")
     doc.setFont("helvetica", "bold")
-    doc.text("2. MDHAMINI", pageMargin + 2, yPos + 5)
+    doc.text(`2. ${t.guarantorInfo}`, pageMargin + 2, yPos + 5)
     yPos += 12
 
     doc.setFontSize(11)
     doc.setFont("helvetica", "normal")
 
     // Add all guarantor fields
-    yPos = addFormField("2.1 Jina la Mdhamini: ", formData.jinaLaMdhamini, yPos)
+    yPos = addFormField(`2.1 ${t.guarantorName}: `, formData.jinaLaMdhamini, yPos)
 
     // Guarantor address
     doc.setFont("helvetica", "bold")
-    doc.text("2.2 Anuani kamili; S.L.P: ", pageMargin, yPos)
+    doc.text(`2.2 ${t.guarantorAddress}; ${t.poBox}: `, pageMargin, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + labelWidth + 15, yPos, pageMargin + labelWidth + 50, yPos)
@@ -870,7 +944,7 @@ const Membership = () => {
 
     // Guarantor contact
     doc.setFont("helvetica", "bold")
-    doc.text("Namba ya simu: ", pageMargin, yPos)
+    doc.text(`${t.guarantorPhone}: `, pageMargin, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + 35, yPos, pageMargin + 110, yPos)
@@ -880,7 +954,7 @@ const Membership = () => {
     }
 
     doc.setFont("helvetica", "bold")
-    doc.text("Barua pepe: ", pageMargin + 115, yPos)
+    doc.text(`${t.guarantorEmail}: `, pageMargin + 115, yPos)
     doc.setFont("helvetica", "normal")
 
     doc.line(pageMargin + 145, yPos, pageMargin + 195, yPos)
@@ -897,7 +971,7 @@ const Membership = () => {
 
     // Guarantor description
     doc.setFont("helvetica", "bold")
-    doc.text("2.3 Maelezo ya mdhamini kwa mdhaminiwa:", pageMargin, yPos)
+    doc.text(`2.3 ${t.guarantorDescription}:`, pageMargin, yPos)
     yPos += 5
 
     const malezoBoxHeight = 20
@@ -918,10 +992,10 @@ const Membership = () => {
 
     // Guarantor signature
     doc.setFont("helvetica", "bold")
-    doc.text("2.4 Sahihi ya Mdhamini: ", pageMargin, yPos)
+    doc.text(`2.4 ${t.pdf.guarantorSignature} `, pageMargin, yPos)
     doc.line(pageMargin + 45, yPos, pageMargin + 100, yPos)
 
-    doc.text("Tarehe: ", pageMargin + 110, yPos)
+    doc.text(`${t.pdf.date}: `, pageMargin + 110, yPos)
     doc.text(currentDate, pageMargin + 130, yPos)
     yPos += 15
 
@@ -936,12 +1010,12 @@ const Membership = () => {
     doc.setFillColor(220, 220, 220)
     doc.rect(pageMargin, yPos, 180, 8, "F")
     doc.setFont("helvetica", "bold")
-    doc.text("B. MASHARTI YA KUJIUNGA", pageMargin + 2, yPos + 6)
+    doc.text(`B. ${t.membershipTerms}`, pageMargin + 2, yPos + 6)
     yPos += 15
 
     doc.setFontSize(12)
     doc.setFont("helvetica", "bold")
-    doc.text("3. ADA NA MICHANGO", pageMargin, yPos)
+    doc.text(`3. ${t.feesContributions}`, pageMargin, yPos)
     yPos += 10
 
     // Fee structure table
@@ -982,32 +1056,22 @@ const Membership = () => {
 
     // Header text
     doc.setFont("helvetica", "bold")
-    doc.text("Na.", pageMargin + colWidths[0] / 2, tableStartY + rowHeight - 3, { align: "center" })
-    doc.text("Aina ya Malipo", pageMargin + colWidths[0] + colWidths[1] / 2, tableStartY + rowHeight - 3, {
+    doc.text(t.pdf.tableHeaders.number, pageMargin + colWidths[0] / 2, tableStartY + rowHeight - 3, { align: "center" })
+    doc.text(t.pdf.tableHeaders.paymentType, pageMargin + colWidths[0] + colWidths[1] / 2, tableStartY + rowHeight - 3, {
       align: "center",
     })
-    doc.text("Kiwango Tsh", pageMargin + colWidths[0] + colWidths[1] + colWidths[2] / 2, tableStartY + rowHeight - 3, {
+    doc.text(t.pdf.tableHeaders.amount, pageMargin + colWidths[0] + colWidths[1] + colWidths[2] / 2, tableStartY + rowHeight - 3, {
       align: "center",
     })
     doc.text(
-      "Maelezo",
+      t.pdf.tableHeaders.description,
       pageMargin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2,
       tableStartY + rowHeight - 3,
       { align: "center" },
     )
 
     // Table data
-    const tableData = [
-      ["1", "Malipo ya Fomu", "50,000/-", "Inalipwa mara moja wakati wa kuchukua fomu"],
-      ["2", "Ada ya Kiingilio kwa Mwombaji", "60,000/-", "Inalipwa mara moja tu (Wakati wa kujiunga na Klabu)"],
-      ["3", "Ada ya mwezi", "15,000/-", "Inalipwa kila mwezi (Kati ya Tarehe 1 hadi 5 ya Mwezi)"],
-      [
-        "4",
-        "Michango mbali mbali (Kama Msiba, maradhi, Sare, n.k)",
-        "50,000/-",
-        "Inaweza kulipwa pamoja na ada ya Kiingilio kwa mwanaklabu anaejiunga ama kati ya mwezi Januari na Juni kwa mwanaklabu aliyekwisha jiunga",
-      ],
-    ]
+    const tableData = t.pdf.feeStructure
 
     doc.setFont("helvetica", "normal")
     let currentY = tableStartY + rowHeight
@@ -1055,11 +1119,10 @@ const Membership = () => {
     // Important note
     doc.setFontSize(10)
     doc.setFont("helvetica", "bold")
-    doc.text("Muhimu:", 20, yPos)
+    doc.text(`${t.pdf.important}`, 20, yPos)
     yPos += 5
     doc.setFont("helvetica", "normal")
-    const muhimuText =
-      "Mwanaklabu atatakiwa kulipa michango hii ndani ya siku 14 (kumi na nne) tangia tarehe ya kukubaliwa kuwa mjumbe wa Klabu. Utaratibu wa malipo ya ada na michango utaelekezwa katika barua ya kukubaliwa."
+    const muhimuText = t.pdf.importantNote
     const muhimuLines = doc.splitTextToSize(muhimuText, 170)
     doc.text(muhimuLines, 20, yPos)
     yPos += muhimuLines.length * 4 + 10
@@ -1097,7 +1160,7 @@ const Membership = () => {
 
               doc.setFontSize(12)
               doc.setFont("helvetica", "bold")
-              doc.text("Kitambulisho/Hati ya Kusafiria:", 20, yPos)
+              doc.text(t.pdf.idDocumentLabel, 20, yPos)
               yPos += 10
 
               const xPos = (210 - pdfWidth) / 2
@@ -1127,12 +1190,12 @@ const Membership = () => {
 
     doc.setFontSize(12)
     doc.setFont("helvetica", "bold")
-    doc.text("Maelekezo ya Mwisho:", 20, yPos)
+    doc.text(`${t.pdf.finalInstructions}`, 20, yPos)
     yPos += 10
 
     doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
-    doc.text("Maombi haya yatumwe kwa njia ya barua pepe ya Klabu: info@landroverclub.or.tz", 20, yPos)
+    doc.text(t.pdf.emailInstruction, 20, yPos)
     yPos += 20
 
     // Generate QR Code with complete applicant information
@@ -1196,15 +1259,15 @@ const Membership = () => {
 
       doc.setFontSize(10)
       doc.setFont("helvetica", "bold")
-      doc.text("QR Code ya Taarifa za Mwombaji", qrXPos, qrYPos - 5)
+      doc.text(t.pdf.qrCodeLabel, qrXPos, qrYPos - 5)
 
       doc.addImage(qrCodeDataURL, "PNG", qrXPos, qrYPos, qrSize, qrSize)
 
       doc.setFontSize(8)
       doc.setFont("helvetica", "normal")
-      doc.text("Scan QR code hii kupata taarifa", qrXPos + qrSize + 5, qrYPos + 10)
-      doc.text("kamili za mwombaji", qrXPos + qrSize + 5, qrYPos + 15)
-      doc.text("(Tumia simu yako kupiga picha ya QR code)", qrXPos + qrSize + 5, qrYPos + 20)
+      const qrDescLines = doc.splitTextToSize(t.pdf.qrCodeDescription, 60)
+      doc.text(qrDescLines, qrXPos + qrSize + 5, qrYPos + 10)
+      doc.text(t.pdf.qrCodeInstruction, qrXPos + qrSize + 5, qrYPos + 20)
     } catch (error) {
       console.log("Error generating QR code:", error)
     }
@@ -1217,75 +1280,74 @@ const Membership = () => {
   const generateODF = async () => {
     try {
       // Create ODF content as XML
-      const currentDate = new Date().toLocaleDateString("sw-TZ")
+      const currentDate = new Date().toLocaleDateString(language === "sw" ? "sw-TZ" : "en-US")
       const selectedType = landRoverTypes.find((type) => type.value === formData.landRoverType)
       const selectedModel =
         formData.landRoverType &&
         landRoverModels[formData.landRoverType]?.find((model) => model.value === formData.landRoverModel)
 
+      const genderText = formData.jinsia === "me" ? t.male : formData.jinsia === "ke" ? t.female : ""
+
       const odfContent = `<?xml version="1.0" encoding="UTF-8"?>
-<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
                  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
                  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
                  office:mimetype="application/vnd.oasis.opendocument.text">
   <office:body>
     <office:text>
-      <text:h text:style-name="Heading1">LAND ROVER CLUB TANZANIA</text:h>
+      <text:h text:style-name="Heading1">${t.clubName}</text:h>
       <text:p>P. O. BOX 77, MOROGORO. TANZANIA</text:p>
       <text:p>TEL; +255 763 652 641/+255 718 133 333</text:p>
       <text:p>Email; info@landroverclub.or.tz</text:p>
       
-      <text:h text:style-name="Heading2">FOMU YA KUJIUNGA NA UANACHAMA</text:h>
+      <text:h text:style-name="Heading2">${t.formTitle}</text:h>
       
-      <text:p>Kumb Na. ${userReferenceNumber}</text:p>
-      <text:p>Tarehe ${currentDate}</text:p>
+      <text:p>${t.pdf.referenceNumber} ${userReferenceNumber}</text:p>
+      <text:p>${t.pdf.date} ${currentDate}</text:p>
       
-      <text:h text:style-name="Heading2">A. MAELEZO YA MWOMBAJI NA MDHAMINI</text:h>
+      <text:h text:style-name="Heading2">A. ${t.applicantInfo}</text:h>
       
-      <text:h text:style-name="Heading3">1. TAARIFA BINAFSI</text:h>
+      <text:h text:style-name="Heading3">1. ${t.personalInfo}</text:h>
       
-      <text:p>1.1 Jina la Mwombaji: ${formData.jinaLaMwombaji}</text:p>
-      <text:p>1.2 Tarehe ya Kuzaliwa: ${formData.tareheyaKuzaliwa}</text:p>
-      <text:p>1.3 Jinsia: ${formData.jinsia === "me" ? "Me" : formData.jinsia === "ke" ? "Ke" : ""}</text:p>
-      <text:p>1.4 Anuani Kamili: S.L.P ${formData.slp}</text:p>
+      <text:p>1.1 ${t.applicantName}: ${formData.jinaLaMwombaji}</text:p>
+      <text:p>1.2 ${t.dateOfBirth}: ${formData.tareheyaKuzaliwa}</text:p>
+      <text:p>1.3 ${t.gender}: ${genderText}</text:p>
+      <text:p>1.4 ${t.fullAddress}: ${t.poBox} ${formData.slp}</text:p>
       <text:p>${formData.anuaniKamili}</text:p>
-      <text:p>Namba ya simu: ${formData.nambaYaSimu}</text:p>
-      <text:p>Barua pepe: ${formData.baruaPepe}</text:p>
-      <text:p>Aina ya Land Rover: ${selectedType?.label || ""}</text:p>
-      <text:p>Mfano: ${selectedModel?.label || ""}</text:p>
+      <text:p>${t.phoneNumber}: ${formData.nambaYaSimu}</text:p>
+      <text:p>${t.email}: ${formData.baruaPepe}</text:p>
+      <text:p>${t.landRoverType}: ${selectedType?.label || ""}</text:p>
+      <text:p>${t.landRoverModel}: ${selectedModel?.label || ""}</text:p>
       
-      <text:p>1.5 Wasifu wa mwombaji kwa ufupi:</text:p>
+      <text:p>1.5 ${t.applicantProfile}:</text:p>
       <text:p>${formData.wasifuWaMwombaji}</text:p>
       
-      <text:p>1.6 Umepataje taarifa za Tanzania Land Rover Club:</text:p>
+      <text:p>1.6 ${t.howHeardAbout}:</text:p>
       <text:p>${formData.umepatajeTaarifa}</text:p>
       
-      <text:p>1.7 Tamko la Mwombaji kwa Club:</text:p>
-      <text:p>Mimi ${formData.jinaLaMwombaji || "........................"} ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.</text:p>
+      <text:p>1.7 ${t.declaration}:</text:p>
+      <text:p>${language === "sw" ? "Mimi" : "I"} ${formData.jinaLaMwombaji || "........................"} ${t.declarationText}</text:p>
       
-      <text:h text:style-name="Heading3">2. MDHAMINI</text:h>
+      <text:h text:style-name="Heading3">2. ${t.guarantorInfo}</text:h>
       
-      <text:p>2.1 Jina la Mdhamini: ${formData.jinaLaMdhamini}</text:p>
-      <text:p>2.2 Anuani kamili; S.L.P: ${formData.slpYaMdhamini}</text:p>
+      <text:p>2.1 ${t.guarantorName}: ${formData.jinaLaMdhamini}</text:p>
+      <text:p>2.2 ${t.guarantorAddress}; ${t.poBox}: ${formData.slpYaMdhamini}</text:p>
       <text:p>${formData.anuaniYaMdhamini}</text:p>
-      <text:p>Namba ya simu: ${formData.nambaYaSimuYaMdhamini}</text:p>
-      <text:p>Barua pepe: ${formData.baruaPepeYaMdhamini}</text:p>
+      <text:p>${t.guarantorPhone}: ${formData.nambaYaSimuYaMdhamini}</text:p>
+      <text:p>${t.guarantorEmail}: ${formData.baruaPepeYaMdhamini}</text:p>
       
-      <text:p>2.3 Maelezo ya mdhamini kwa mdhaminiwa:</text:p>
+      <text:p>2.3 ${t.guarantorDescription}:</text:p>
       <text:p>${formData.malezoYaMdhamini}</text:p>
       
-      <text:h text:style-name="Heading2">B. MASHARTI YA KUJIUNGA</text:h>
+      <text:h text:style-name="Heading2">B. ${t.membershipTerms}</text:h>
       
-      <text:h text:style-name="Heading3">3. ADA NA MICHANGO</text:h>
+      <text:h text:style-name="Heading3">3. ${t.feesContributions}</text:h>
       
-      <text:p>1. Malipo ya Fomu - 50,000/- - Inalipwa mara moja wakati wa kuchukua fomu</text:p>
-      <text:p>2. Ada ya Kiingilio kwa Mwombaji - 60,000/- - Inalipwa mara moja tu (Wakati wa kujiunga na Klabu)</text:p>
-      <text:p>3. Ada ya mwezi - 15,000/- - Inalipwa kila mwezi (Kati ya Tarehe 1 hadi 5 ya Mwezi)</text:p>
-      <text:p>4. Michango mbali mbali (Kama Msiba, maradhi, Sare, n.k) - 50,000/- - Inaweza kulipwa pamoja na ada ya Kiingilio kwa mwanaklabu anaejiunga ama kati ya mwezi Januari na Juni kwa mwanaklabu aliyekwisha jiunga</text:p>
+      ${t.pdf.feeStructure.map(row => `<text:p>${row[0]}. ${row[1]} - ${row[2]} - ${row[3]}</text:p>`).join('\n      ')}
       
-      <text:p>Muhimu: Mwanaklabu atatakiwa kulipa michango hii ndani ya siku 14 (kumi na nne) tangia tarehe ya kukubaliwa kuwa mjumbe wa Klabu. Utaratibu wa malipo ya ada na michango utaelekezwa katika barua ya kukubaliwa.</text:p>
+      <text:p>${t.pdf.important}: ${t.pdf.importantNote}</text:p>
       
-      <text:p>Maelekezo ya Mwisho: Maombi haya yatumwe kwa njia ya barua pepe ya Klabu: info@landroverclub.or.tz</text:p>
+      <text:p>${t.pdf.finalInstructions}: ${t.pdf.emailInstruction}</text:p>
       
     </office:text>
   </office:body>
