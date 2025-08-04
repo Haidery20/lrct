@@ -47,7 +47,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-6">Adventures</h3>
             <ul className="space-y-3">
-              {['Kilimanjaro Base Camp', 'Serengeti Safari', 'Ngorongoro Crater', 'Coastal Discovery'].map((item) => (
+              {['Landrover Festival', 'Mpalano Festival', 'Udzungwa', 'Saadani'].map((item) => (
                 <li key={item}>
                   <a href="#" className="text-gray-300 hover:text-green-400 transition-colors">
                     {item}
