@@ -251,10 +251,15 @@ const Gallery = () => {
 
           {/* Load More Button */}
           <div className="text-center mt-12">
-            <button className="bg-green-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-green-700 transition-all duration-300 transform hover:scale-105">
-              Load More Photos
-            </button>
-          </div>
+  <a
+    href="https://drive.google.com/drive/folders/1a6DfkS2Pl4kUzhVroS1qjpYJh7RJdkCF"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-block bg-green-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-green-700 transition-all duration-300 transform hover:scale-105"
+  >
+    Load More Photos
+  </a>
+</div>
         </div>
       </section>
 
