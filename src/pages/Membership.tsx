@@ -455,7 +455,7 @@ const Membership = () => {
     }
   }
 
-  // Enhanced PDF generation with complete form data
+  // Enhanced PDF generation with club logo
   const generatePDF = async () => {
     const currentDate = new Date().toLocaleDateString("sw-TZ")
 
@@ -482,25 +482,62 @@ const Membership = () => {
     // Define page margins
     const pageMargin = 15
 
-    // ------------ HEADER SECTION ------------
+    // ------------ HEADER SECTION WITH CLUB LOGO ------------
 
-    // Add club logo placeholder
+    // Add club logo
     try {
-      // Create a simple logo placeholder
-      doc.setFillColor(34, 197, 94) // Green color
-      doc.circle(pageMargin + 17.5, pageMargin + 17.5, 17.5, "F")
+      // Load the club logo from your images folder
+      const logoImg = new Image()
+      logoImg.crossOrigin = "anonymous"
+      logoImg.src = "/images/lrct-logo.png" // Path to your logo
 
-      // Add "LRCT" text in the circle
+      await new Promise((resolve, reject) => {
+        logoImg.onload = () => {
+          try {
+            // Add logo to PDF - positioned on the left side
+            const logoWidth = 30
+            const logoHeight = 30
+            doc.addImage(logoImg, "PNG", pageMargin, pageMargin, logoWidth, logoHeight)
+            resolve(true)
+          } catch (err) {
+            console.log("Error adding logo to PDF:", err)
+            // If logo fails, create a simple placeholder
+            doc.setFillColor(34, 197, 94) // Green color
+            doc.circle(pageMargin + 15, pageMargin + 15, 15, "F")
+            doc.setTextColor(255, 255, 255)
+            doc.setFontSize(12)
+            doc.setFont("helvetica", "bold")
+            doc.text("LRCT", pageMargin + 15, pageMargin + 18, { align: "center" })
+            doc.setTextColor(0, 0, 0) // Reset to black
+            resolve(false)
+          }
+        }
+        logoImg.onerror = () => {
+          console.log("Could not load logo, using placeholder")
+          // Create a simple logo placeholder if image fails to load
+          doc.setFillColor(34, 197, 94) // Green color
+          doc.circle(pageMargin + 15, pageMargin + 15, 15, "F")
+          doc.setTextColor(255, 255, 255)
+          doc.setFontSize(12)
+          doc.setFont("helvetica", "bold")
+          doc.text("LRCT", pageMargin + 15, pageMargin + 18, { align: "center" })
+          doc.setTextColor(0, 0, 0) // Reset to black
+          resolve(false)
+        }
+      })
+    } catch (error) {
+      console.log("Error loading logo:", error)
+      // Fallback to simple placeholder
+      doc.setFillColor(34, 197, 94) // Green color
+      doc.circle(pageMargin + 15, pageMargin + 15, 15, "F")
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(12)
       doc.setFont("helvetica", "bold")
-      doc.text("LRCT", pageMargin + 17.5, pageMargin + 20, { align: "center" })
+      doc.text("LRCT", pageMargin + 15, pageMargin + 18, { align: "center" })
       doc.setTextColor(0, 0, 0) // Reset to black
-    } catch (error) {
-      console.log("Could not create logo:", error)
     }
 
-    // Header - Title & Contact info
+    // Header - Title & Contact info (positioned to the right of logo)
     doc.setFontSize(20)
     doc.setFont("helvetica", "bold")
     doc.text("LAND ROVER CLUB TANZANIA", 105, pageMargin + 10, { align: "center" })
