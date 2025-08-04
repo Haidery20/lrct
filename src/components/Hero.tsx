@@ -1,28 +1,87 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowRight, Mountain, Users, MapPin } from 'lucide-react';
+import { ArrowRight, Mountain, Users, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [, setLocation] = useLocation();
+
+  // Array of background images for the carousel
+  const backgroundImages = [
+    '/images/hero/landrovers.avif',
+    '/images/hero/outconvoy.avif',
+    '/images/hero/group.avif',
+    '/images/hero/trails.avif',
+    '/images/hero/tent.avif'
+  ];
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
+  // Auto-advance carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) =>
+        (prevIndex + 1) % backgroundImages.length
+      );
+    }, 5000); // Change image every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [backgroundImages.length]);
+
+  const goToPrevious = () => {
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === 0 ? backgroundImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToNext = () => {
+    setCurrentImageIndex((prevIndex) =>
+      (prevIndex + 1) % backgroundImages.length
+    );
+  };
+
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 sm:pt-40">
-      {/* Background image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('/images/landrovers.avif')`
-        }}>
-        </div>
+      {/* Carousel Background Images */}
+      <div className="absolute inset-0">
+        {backgroundImages.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${
+              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{
+              backgroundImage: `url('${image}')`
+            }}
+          />
+        ))}
+      </div>
       
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50"></div>
+
+      {/* Carousel Navigation */}
+      <button
+        onClick={goToPrevious}
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 group"
+        aria-label="Previous image"
+      >
+        <ChevronLeft className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+      </button>
+
+      <button
+        onClick={goToNext}
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 group"
+        aria-label="Next image"
+      >
+        <ChevronRight className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+      </button>
+
       
       {/* Animated background elements */}
       <div className="absolute inset-0">
