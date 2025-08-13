@@ -60,7 +60,7 @@ const Membership = () => {
       clubName: "LAND ROVER CLUB TANZANIA",
       formTitle: "FOMU YA KUJIUNGA NA UANACHAMA",
       membershipPlans: "Mipango ya Uanachama",
-      joinCommunity: "Jiunga na Jumuiya Yetu",
+      joinCommunity: "Jiunge na Jumuiya Yetu",
       planDescription:
         "Chagua kiwango cha uanachama kinachofaa mtindo wako wa uchunguzi. Uanachama wote unajumuisha ufikiaji wa jumuiya yetu ya kusaidia na mwongozo wa kitaalamu.",
 
@@ -130,6 +130,7 @@ const Membership = () => {
         applicantSignature: "Sahihi ya Mwombaji:",
         guarantorSignature: "Sahihi ya Mdhamini:",
         important: "Muhimu:",
+        disclaimer: "Maelezo",
         finalInstructions: "Maelekezo ya Mwisho:",
         qrCodeLabel: "QR Code ya Taarifa za Mwombaji",
         qrCodeDescription: "Scan QR code hii kupata taarifa kamili za mwombaji",
@@ -137,6 +138,7 @@ const Membership = () => {
         idDocumentLabel: "Kitambulisho/Hati ya Kusafiria:",
         emailInstruction: "Maombi haya yatumwe kwa njia ya barua pepe ya Klabu: info@landroverclub.or.tz",
         importantNote: "Mwanaklabu atatakiwa kulipa michango hii ndani ya siku 14 (kumi na nne) tangia tarehe ya kukubaliwa kuwa mjumbe wa Klabu. Utaratibu wa malipo ya ada na michango utaelekezwa katika barua ya kukubaliwa.",
+        importantNote2:"LRCT inatambua wajibu iliopewa chini ya sheria ya ulinzi wa data binafsi na inaahidi kufuata sheria kikamilifu.",
         tableHeaders: {
           number: "Na.",
           paymentType: "Aina ya Malipo",
@@ -1892,6 +1894,10 @@ const Membership = () => {
                       Mwanaklabu atatakiwa kulipa michango hii ndani ya siku 14 (kumi na nne) tangia tarehe ya
                       kukubaliwa kuwa mjumbe wa Klabu. Utaratibu wa malipo ya ada na michango utaelekezwa katika barua
                       ya kukubaliwa.
+                    </p>
+                    <p className="font-semibold">Maelezo:</p>
+                    <p>
+                    LRCT inatambua wajibu iliopewa chini ya sheria ya ulinzi wa data binafsi na inaahidi kufuata sheria kikamilifu.
                     </p>
                   </div>
                 </div>

@@ -60,12 +60,12 @@ const About = () => {
     {
       name: 'Winna Shango',
       title: 'Club Chairperson',
-      image: '/images/winna.jpg'
+      image: '/images/teammembers/winna.jpg'
     },
     {
       name: 'Laban Singoye',
       title: 'Secretary General',
-      image: '/images/laban.jpg'
+      image: '/images/teammembers/laban.jpg'
     },
     {
       name: 'Fredrick Mbuya',
@@ -73,8 +73,8 @@ const About = () => {
       image: '/images/samson.jpg'
     },
     {
-      name: 'Wanda',
-      title: 'Technical Pioneer',
+      name: 'Ahmed Rassam',
+      title: 'Treasurer',
       image: '/images/neema.jpg'
     }
   ];

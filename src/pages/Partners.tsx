@@ -12,11 +12,13 @@ const Partners = () => {
     { name: 'Samcare', logo: '/images/partners/samcare.avif' },
     { name: 'Afriroots', logo: '/images/partners/afriroots.avif' },
     { name: 'Weibull', logo: '/images/partners/weibull.avif' },
+    { name: 'Wanda', logo: '/images/partners/wanda.jpg'},
     // Add more partners as needed
     { name: 'G4L', logo: '/images/partners/g4l.jpg' },
     { name: 'Samcare', logo: '/images/partners/samcare.avif' },
     { name: 'Afriroots', logo: '/images/partners/afriroots.avif' },
     { name: 'Weibull', logo: '/images/partners/weibull.avif' },
+    { name: 'Wanda', logo: '/images/partners/wanda.jpg'},
   ];
 
   // Number of partners to show at once (responsive)
