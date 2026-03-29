@@ -28,9 +28,7 @@ import {
   getDoc,
   query,
   orderBy,
-  where,
   Timestamp,
-  serverTimestamp,
   QueryConstraint,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -44,7 +42,7 @@ import type {
   MembershipTier,
   MembershipApplication,
   ApplicationStatus,
-} from './types'
+} from './types.ts'
 
 // ─── Utility ────────────────────────────────────────────────────────────────
 

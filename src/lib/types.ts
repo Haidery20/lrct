@@ -7,7 +7,11 @@ export interface Event {
   title: string
   description: string
   event_date: string
-  location: string
+  location?: string
+  time?: string
+  event_type?: string
+  attendees?: number
+  registration_deadline?: string
   image_url?: string
   is_published: boolean
   created_at: string
@@ -26,12 +30,28 @@ export interface Partner {
   updated_at: string
 }
 
+// Add these fields to GalleryItem
 export interface GalleryItem {
   id: string
   image_url: string
+  title: string
   caption?: string
   category?: string
+  location?: string
+  date?: string
+  participants?: number
   created_at: string
+}
+
+// Add sub_info to ContactDetail
+export interface ContactDetail {
+  id: string
+  label: string
+  value: string
+  type: 'phone' | 'email' | 'address' | 'social' | 'whatsapp' | string
+  sub_info?: string
+  sort_order: number
+  updated_at: string
 }
 
 export interface CommitteeMember {
@@ -54,14 +74,6 @@ export interface SiteInfo {
   updated_at: string
 }
 
-export interface ContactDetail {
-  id: string
-  label: string
-  value: string
-  type: 'phone' | 'email' | 'address' | 'social' | string
-  sort_order: number
-  updated_at: string
-}
 
 export interface MembershipTier {
   id: string
