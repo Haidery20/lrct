@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Route, Switch } from 'wouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Header from './components/Header';
@@ -9,8 +9,8 @@ import Gallery from './pages/Gallery';
 import Membership from './pages/Membership';
 import Events from './pages/Events';
 import Festivals from './pages/Festivals';
+import PageLoader from './components/PageLoader';
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -26,9 +26,17 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen">
+      {loading && <PageLoader onComplete={() => setLoading(false)} />}
+
+      <div
+        className={`min-h-screen transition-opacity duration-500 ${
+          loading ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
         <Header />
         <main>
           <Switch>
