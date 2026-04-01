@@ -1,0 +1,14 @@
+[
+  {
+    "origin": ["http://localhost:5173", "http://localhost:3000"],
+    "method": ["GET", "HEAD", "DELETE", "PUT", "POST", "OPTIONS"],
+    "responseHeader": ["Content-Type", "x-goog-meta-uploaded-content-length"],
+    "maxAgeSeconds": 3600
+  },
+  {
+    "origin": ["https://landroverclub-cms.web.app"],
+    "method": ["GET", "HEAD", "DELETE", "PUT", "POST", "OPTIONS"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -8,6 +8,8 @@ import { Label } from "./ui/label"
 import { Textarea } from "./ui/textarea"
 import { Checkbox } from "./ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { collection, addDoc } from 'firebase/firestore'
+import { db } from '../lib/firebase'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
@@ -63,6 +65,10 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
     tarehe: new Date().toLocaleDateString("sw-TZ")
   })
 
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+
   const exportToPDF = async () => {
     const element = document.getElementById('membership-form');
     const buttonsContainer = document.querySelector('.form-actions');
@@ -71,7 +77,6 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
     if (!element) return;
 
     try {
-      // Hide buttons and file inputs during PDF generation
       if (buttonsContainer) {
         (buttonsContainer as HTMLElement).style.display = 'none';
       }
@@ -79,10 +84,7 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
         (input as HTMLElement).style.display = 'none';
       });
       
-      // Add PDF-specific styling
       element.classList.add('pdf-export');
-      
-      // Wait a moment for styles to apply
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const canvas = await html2canvas(element, {
@@ -102,7 +104,6 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
       const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-      
       let position = 0;
       
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
@@ -121,15 +122,12 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
     } finally {
-      // Restore visibility
       if (buttonsContainer) {
         (buttonsContainer as HTMLElement).style.display = 'flex';
       }
       uploadInputs.forEach(input => {
         (input as HTMLElement).style.display = 'block';
       });
-      
-      // Remove PDF-specific styling
       element.classList.remove('pdf-export');
     }
   };
@@ -155,10 +153,80 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    // Handle form submission logic here
+
+    // Basic validation
+    if (!formData.jina.trim()) {
+      setError('Tafadhali jaza jina lako.')
+      return
+    }
+    if (!formData.baruaPepe.trim()) {
+      setError('Tafadhali jaza barua pepe yako.')
+      return
+    }
+
+    setSubmitting(true)
+    setError('')
+
+    try {
+      await addDoc(collection(db, 'membership_applications'), {
+        full_name: formData.jina,
+        email: formData.baruaPepe,
+        phone: formData.nambaYaSimu,
+        vehicle_make: 'Land Rover',
+        vehicle_model: formData.gariModel,
+        vehicle_year: formData.gariType,
+        message: formData.wasifu,
+        // Extra fields specific to this form
+        date_of_birth: formData.tareheyaKuzaliwa,
+        gender: formData.jinsia,
+        address: formData.unapoishi,
+        postal_box: formData.sandukulaPosta,
+        emergency_contact_name: formData.jinaLaMtuWaDharura,
+        emergency_contact_relation: formData.uhusiano,
+        emergency_contact_phone: formData.nambaYaSimuYaMtuWaDharura,
+        guarantor_name: formData.jinaLaMdhamini,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      setSubmitted(true)
+    } catch (err) {
+      console.error('Firestore submission error:', err)
+      setError('Imeshindwa kutuma maombi. Tafadhali angalia muunganiko wako wa intaneti na ujaribu tena.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Success screen
+  if (submitted) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Card className="shadow-lg border-2 border-gray-800">
+          <CardContent className="p-12 text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Maombi Yametumwa!</h2>
+            <p className="text-gray-600 mb-2">
+              Asante <strong>{formData.jina}</strong>! Maombi yako ya uanachama yamepokelewa.
+            </p>
+            <p className="text-gray-500 text-sm mb-8">
+              Tutawasiliana nawe kupitia <strong>{formData.baruaPepe}</strong> hivi karibuni.
+            </p>
+            {onBack && (
+              <Button onClick={onBack} className="bg-green-600 hover:bg-green-700 text-white px-8 py-2">
+                Rudi Kwenye Mipango
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -240,16 +308,16 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                    <Label className="w-32 text-base font-bold text-black">Tarehe ya kuzaliwa:</Label>
-                    <div className="flex-1 border-b-2 border-black">
-                      <Input 
-                        type="date"
-                        value={formData.tareheyaKuzaliwa}
-                        onChange={(e) => handleInputChange("tareheyaKuzaliwa", e.target.value)}
-                        className="border-0 border-b-2 border-black rounded-none px-0 focus:ring-0 bg-transparent text-base"
-                      />
-                    </div>
+                  <Label className="w-32 text-base font-bold text-black">Tarehe ya kuzaliwa:</Label>
+                  <div className="flex-1 border-b-2 border-black">
+                    <Input 
+                      type="date"
+                      value={formData.tareheyaKuzaliwa}
+                      onChange={(e) => handleInputChange("tareheyaKuzaliwa", e.target.value)}
+                      className="border-0 border-b-2 border-black rounded-none px-0 focus:ring-0 bg-transparent text-base"
+                    />
                   </div>
+                </div>
                 
                 <div className="flex items-center gap-4">
                   <Label className="w-32 text-base font-bold text-black">Namba ya simu:</Label>
@@ -464,22 +532,22 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
                         const file = e.target.files?.[0];
                         if (file) {
                           const reader = new FileReader();
-                           reader.onload = (event) => {
-                             const img = e.target.parentElement?.querySelector('img') as HTMLImageElement;
-                             const span = e.target.parentElement?.querySelector('.upload-text') as HTMLElement;
-                             const fileName = e.target.parentElement?.querySelector('.file-name') as HTMLElement;
-                             if (file.type.includes('image') && img && event.target?.result) {
-                               img.src = event.target.result as string;
-                               img.style.display = 'block';
-                               if (span) span.style.display = 'none';
-                             } else {
-                               if (fileName) {
-                                 fileName.textContent = file.name;
-                                 fileName.style.display = 'block';
-                               }
-                               if (span) span.style.display = 'none';
-                             }
-                           };
+                          reader.onload = (event) => {
+                            const img = e.target.parentElement?.querySelector('img') as HTMLImageElement;
+                            const span = e.target.parentElement?.querySelector('.upload-text') as HTMLElement;
+                            const fileName = e.target.parentElement?.querySelector('.file-name') as HTMLElement;
+                            if (file.type.includes('image') && img && event.target?.result) {
+                              img.src = event.target.result as string;
+                              img.style.display = 'block';
+                              if (span) span.style.display = 'none';
+                            } else {
+                              if (fileName) {
+                                fileName.textContent = file.name;
+                                fileName.style.display = 'block';
+                              }
+                              if (span) span.style.display = 'none';
+                            }
+                          };
                           reader.readAsDataURL(file);
                         }
                       }}
@@ -505,22 +573,22 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
                         const file = e.target.files?.[0];
                         if (file) {
                           const reader = new FileReader();
-                           reader.onload = (event) => {
-                             const img = e.target.parentElement?.querySelector('img') as HTMLImageElement;
-                             const span = e.target.parentElement?.querySelector('.upload-text') as HTMLElement;
-                             const fileName = e.target.parentElement?.querySelector('.file-name') as HTMLElement;
-                             if (file.type.includes('image') && img && event.target?.result) {
-                               img.src = event.target.result as string;
-                               img.style.display = 'block';
-                               if (span) span.style.display = 'none';
-                             } else {
-                               if (fileName) {
-                                 fileName.textContent = file.name;
-                                 fileName.style.display = 'block';
-                               }
-                               if (span) span.style.display = 'none';
-                             }
-                           };
+                          reader.onload = (event) => {
+                            const img = e.target.parentElement?.querySelector('img') as HTMLImageElement;
+                            const span = e.target.parentElement?.querySelector('.upload-text') as HTMLElement;
+                            const fileName = e.target.parentElement?.querySelector('.file-name') as HTMLElement;
+                            if (file.type.includes('image') && img && event.target?.result) {
+                              img.src = event.target.result as string;
+                              img.style.display = 'block';
+                              if (span) span.style.display = 'none';
+                            } else {
+                              if (fileName) {
+                                fileName.textContent = file.name;
+                                fileName.style.display = 'block';
+                              }
+                              if (span) span.style.display = 'none';
+                            }
+                          };
                           reader.readAsDataURL(file);
                         }
                       }}
@@ -535,6 +603,13 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
                 </div>
               </div>
             </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+                {error}
+              </div>
+            )}
             
             {/* Form Actions */}
             <div className="form-actions flex flex-col sm:flex-row gap-4 justify-center mt-8">
@@ -544,6 +619,7 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
                   variant="outline" 
                   onClick={onBack}
                   className="px-8 py-2"
+                  disabled={submitting}
                 >
                   Rudi Kwenye Mipango
                 </Button>
@@ -552,11 +628,16 @@ const SimpleMembershipForm = ({ onBack }: SimpleMembershipFormProps) => {
                 type="button" 
                 onClick={exportToPDF}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+                disabled={submitting}
               >
                 Pakua PDF
               </Button>
-              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-8 py-2">
-                Wasilisha Maombi
+              <Button
+                type="submit"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 disabled:opacity-50"
+                disabled={submitting}
+              >
+                {submitting ? 'Inatuma...' : 'Wasilisha Maombi'}
               </Button>
             </div>
           </form>
