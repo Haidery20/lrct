@@ -351,57 +351,60 @@ const Membership = () => {
       created_at: new Date().toISOString()
     })
     
-    // Send confirmation email to user
+    // Send confirmation emails (non-blocking - don't let email failures block submission)
     setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'uploading', progress: 50 } : st))
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: fanData.email,
-        subject: 'Fan Registration Confirmation — Land Rover Club Tanzania',
-        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #16a34a;">Welcome to LRCT Fans! 🎉</h2>
-          <p>Dear ${fanData.full_name},</p>
-          <p>Thank you for registering as a fan with Land Rover Club Tanzania. We are excited to have you join our community!</p>
-          <p><strong>Your Registration Details:</strong></p>
-          <ul>
-            <li><strong>Name:</strong> ${fanData.full_name}</li>
-            <li><strong>Email:</strong> ${fanData.email}</li>
-            <li><strong>Phone:</strong> ${fanData.phone}</li>
-            <li><strong>City:</strong> ${fanData.city}</li>
-          </ul>
-          <p>You will now receive access to:</p>
-          <ul>
-            <li>Community updates and announcements</li>
-            <li>Invitations to public events</li>
-            <li>Monthly newsletter</li>
-          </ul>
-          <p>If you have any questions, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
-          <p>Best regards,<br/>Land Rover Club Tanzania Team</p>
-        </div>`
-      })
-    })
-    
-    // Send notification to admin
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: 'landroverclubtz@gmail.com',
-        subject: `New Fan Registration: ${fanData.full_name}`,
-        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>New Fan Registration</h2>
-          <p><strong>Name:</strong> ${fanData.full_name}</p>
-          <p><strong>Email:</strong> ${fanData.email}</p>
-          <p><strong>Phone:</strong> ${fanData.phone}</p>
-          <p><strong>City:</strong> ${fanData.city}</p>
-          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-        </div>`
-      })
+    Promise.all([
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          to: fanData.email,
+          subject: 'Fan Registration Confirmation — Land Rover Club Tanzania',
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #16a34a;">Welcome to LRCT Fans! 🎉</h2>
+            <p>Dear ${fanData.full_name},</p>
+            <p>Thank you for registering as a fan with Land Rover Club Tanzania. We are excited to have you join our community!</p>
+            <p><strong>Your Registration Details:</strong></p>
+            <ul>
+              <li><strong>Name:</strong> ${fanData.full_name}</li>
+              <li><strong>Email:</strong> ${fanData.email}</li>
+              <li><strong>Phone:</strong> ${fanData.phone}</li>
+              <li><strong>City:</strong> ${fanData.city}</li>
+            </ul>
+            <p>You will now receive access to:</p>
+            <ul>
+              <li>Community updates and announcements</li>
+              <li>Invitations to public events</li>
+              <li>Monthly newsletter</li>
+            </ul>
+            <p>If you have any questions, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
+            <p>Best regards,<br/>Land Rover Club Tanzania Team</p>
+          </div>`
+        })
+      }).catch(e => console.error('User email failed:', e)),
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          to: 'landroverclubtz@gmail.com',
+          subject: `New Fan Registration: ${fanData.full_name}`,
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>New Fan Registration</h2>
+            <p><strong>Name:</strong> ${fanData.full_name}</p>
+            <p><strong>Email:</strong> ${fanData.email}</p>
+            <p><strong>Phone:</strong> ${fanData.phone}</p>
+            <p><strong>City:</strong> ${fanData.city}</p>
+            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          </div>`
+        })
+      }).catch(e => console.error('Admin email failed:', e))
+    ]).then(() => {
+      setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'done', progress: 100 } : st))
     })
     
     setUploadSteps(s => s.map((st, i) => [0, 1].includes(i) ? { ...st, status: 'done', progress: 100 } : st))
-    await new Promise(r => setTimeout(r, 500))
     setSubmitSuccess(true)
   } catch (err: any) {
     setSubmitError(err?.message ?? 'Something went wrong. Please try again.')
@@ -466,67 +469,69 @@ const Membership = () => {
       updated_at: new Date().toISOString(),
     })
     
-    // Send confirmation email to user
+    // Send confirmation emails (non-blocking - don't let email failures block submission)
     setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'uploading', progress: 50 } : st))
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: personal.email,
-        subject: 'Membership Application Received — Land Rover Club Tanzania',
-        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #16a34a;">Application Received! ✓</h2>
-          <p>Dear ${personal.full_name},</p>
-          <p>Thank you for submitting your membership application to Land Rover Club Tanzania. We have received your application and it is under review.</p>
-          <p><strong>Application Details:</strong></p>
-          <ul>
-            <li><strong>Full Name:</strong> ${personal.full_name}</li>
-            <li><strong>Email:</strong> ${personal.email}</li>
-            <li><strong>Phone:</strong> ${personal.phone}</li>
-            <li><strong>Guarantor:</strong> ${guarantor.full_name}</li>
-          </ul>
-          <p>Our club committee will review your application and contact you within 7-10 business days with a decision.</p>
-          <p><strong>Next Steps:</strong></p>
-          <ul>
-            <li>We will verify your submitted documents</li>
-            <li>The committee will review your application</li>
-            <li>You will be contacted with the decision</li>
-          </ul>
-          <p>If you have any questions in the meantime, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
-          <p>Best regards,<br/>Land Rover Club Tanzania Committee</p>
-        </div>`
-      })
+    Promise.all([
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          to: personal.email,
+          subject: 'Membership Application Received — Land Rover Club Tanzania',
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #16a34a;">Application Received! ✓</h2>
+            <p>Dear ${personal.full_name},</p>
+            <p>Thank you for submitting your membership application to Land Rover Club Tanzania. We have received your application and it is under review.</p>
+            <p><strong>Application Details:</strong></p>
+            <ul>
+              <li><strong>Full Name:</strong> ${personal.full_name}</li>
+              <li><strong>Email:</strong> ${personal.email}</li>
+              <li><strong>Phone:</strong> ${personal.phone}</li>
+              <li><strong>Guarantor:</strong> ${guarantor.full_name}</li>
+            </ul>
+            <p>Our club committee will review your application and contact you within 7-10 business days with a decision.</p>
+            <p><strong>Next Steps:</strong></p>
+            <ul>
+              <li>We will verify your submitted documents</li>
+              <li>The committee will review your application</li>
+              <li>You will be contacted with the decision</li>
+            </ul>
+            <p>If you have any questions in the meantime, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
+            <p>Best regards,<br/>Land Rover Club Tanzania Committee</p>
+          </div>`
+        })
+      }).catch(e => console.error('User email failed:', e)),
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          to: 'landroverclubtz@gmail.com',
+          subject: `New Membership Application: ${personal.full_name}`,
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>New Membership Application</h2>
+            <p><strong>Name:</strong> ${personal.full_name}</p>
+            <p><strong>Email:</strong> ${personal.email}</p>
+            <p><strong>Phone:</strong> ${personal.phone}</p>
+            <p><strong>Date of Birth:</strong> ${personal.dob}</p>
+            <p><strong>Gender:</strong> ${personal.gender}</p>
+            <p><strong>P.O. Box:</strong> ${personal.po_box}</p>
+            <p><strong>How They Heard About Us:</strong> ${personal.heard_about} ${personal.heard_other ? '(' + personal.heard_other + ')' : ''}</p>
+            <p><strong>Bio/Message:</strong> ${personal.bio}</p>
+            <hr style="border: 1px solid #ccc; margin: 20px 0;">
+            <p><strong>Guarantor Details:</strong></p>
+            <p><strong>Name:</strong> ${guarantor.full_name}</p>
+            <p><strong>Phone:</strong> ${guarantor.phone}</p>
+            <p><strong>Email:</strong> ${guarantor.email}</p>
+            <p><strong>Description:</strong> ${guarantor.description}</p>
+            <p><strong>Application Time:</strong> ${new Date().toLocaleString()}</p>
+          </div>`
+        })
+      }).catch(e => console.error('Admin email failed:', e))
+    ]).then(() => {
+      setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'done', progress: 100 } : st))
     })
-    
-    // Send notification to admin
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: 'landroverclubtz@gmail.com',
-        subject: `New Membership Application: ${personal.full_name}`,
-        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>New Membership Application</h2>
-          <p><strong>Name:</strong> ${personal.full_name}</p>
-          <p><strong>Email:</strong> ${personal.email}</p>
-          <p><strong>Phone:</strong> ${personal.phone}</p>
-          <p><strong>Date of Birth:</strong> ${personal.dob}</p>
-          <p><strong>Gender:</strong> ${personal.gender}</p>
-          <p><strong>P.O. Box:</strong> ${personal.po_box}</p>
-          <p><strong>How They Heard About Us:</strong> ${personal.heard_about} ${personal.heard_other ? '(' + personal.heard_other + ')' : ''}</p>
-          <p><strong>Bio/Message:</strong> ${personal.bio}</p>
-          <hr style="border: 1px solid #ccc; margin: 20px 0;">
-          <p><strong>Guarantor Details:</strong></p>
-          <p><strong>Name:</strong> ${guarantor.full_name}</p>
-          <p><strong>Phone:</strong> ${guarantor.phone}</p>
-          <p><strong>Email:</strong> ${guarantor.email}</p>
-          <p><strong>Description:</strong> ${guarantor.description}</p>
-          <p><strong>Application Time:</strong> ${new Date().toLocaleString()}</p>
-        </div>`
-      })
-    })
-    
-    setUploadSteps(s => s.map((st, i) => [0, 1].includes(i) ? { ...st, status: 'done', progress: 100 } : st))
     await new Promise(r => setTimeout(r, 500))
     setSubmitSuccess(true)
   } catch (err: any) {
