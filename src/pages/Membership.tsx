@@ -26,6 +26,7 @@ const uploadFileWithProgress = (
     const formData = new FormData()
     formData.append('file', file)
     formData.append('upload_preset', uploadPreset)
+    formData.append('folder', `landroverclub/${path}`)
 
     const xhr = new XMLHttpRequest()
 
@@ -334,84 +335,93 @@ const Membership = () => {
   const [fanPhotoPreview, setFanPhotoPreview] = useState<string | null>(null)
 
   const submitFan = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!fanTcAgreed) return
-  setSubmitError(null)
-  setIsSubmitting(true)
-  const steps: UploadStep[] = [
-    { label: 'Saving registration', status: 'waiting', progress: 0 },
-    { label: 'Sending confirmation email', status: 'waiting', progress: 0 },
-  ]
-  setUploadSteps(steps)
-  try {
-    setUploadSteps(s => s.map((st, i) => i === 0 ? { ...st, status: 'uploading', progress: 50 } : st))
-    await addDoc(collection(db, 'fans'), {
-      ...fanData, photo_url: '', type: 'fan',
-      status: 'active', tc_agreed: true,
-      created_at: new Date().toISOString()
-    })
-    
-    // Send confirmation emails (non-blocking - don't let email failures block submission)
-    setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'uploading', progress: 50 } : st))
-    Promise.all([
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({
-          to: fanData.email,
-          subject: 'Fan Registration Confirmation — Land Rover Club Tanzania',
-          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #16a34a;">Welcome to LRCT Fans! 🎉</h2>
-            <p>Dear ${fanData.full_name},</p>
-            <p>Thank you for registering as a fan with Land Rover Club Tanzania. We are excited to have you join our community!</p>
-            <p><strong>Your Registration Details:</strong></p>
-            <ul>
-              <li><strong>Name:</strong> ${fanData.full_name}</li>
-              <li><strong>Email:</strong> ${fanData.email}</li>
-              <li><strong>Phone:</strong> ${fanData.phone}</li>
-              <li><strong>City:</strong> ${fanData.city}</li>
-            </ul>
-            <p>You will now receive access to:</p>
-            <ul>
-              <li>Community updates and announcements</li>
-              <li>Invitations to public events</li>
-              <li>Monthly newsletter</li>
-            </ul>
-            <p>If you have any questions, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
-            <p>Best regards,<br/>Land Rover Club Tanzania Team</p>
-          </div>`
-        })
-      }).catch(e => console.error('User email failed:', e)),
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({
-          to: 'landroverclubtz@gmail.com',
-          subject: `New Fan Registration: ${fanData.full_name}`,
-          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>New Fan Registration</h2>
-            <p><strong>Name:</strong> ${fanData.full_name}</p>
-            <p><strong>Email:</strong> ${fanData.email}</p>
-            <p><strong>Phone:</strong> ${fanData.phone}</p>
-            <p><strong>City:</strong> ${fanData.city}</p>
-            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-          </div>`
-        })
-      }).catch(e => console.error('Admin email failed:', e))
-    ]).then(() => {
-      setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'done', progress: 100 } : st))
-    })
-    
-    setUploadSteps(s => s.map((st, i) => [0, 1].includes(i) ? { ...st, status: 'done', progress: 100 } : st))
-    setSubmitSuccess(true)
-  } catch (err: any) {
-    setSubmitError(err?.message ?? 'Something went wrong. Please try again.')
-  } finally {
-    setIsSubmitting(false)
+    e.preventDefault()
+    if (!fanTcAgreed) return
+    setSubmitError(null)
+    setIsSubmitting(true)
+    const steps: UploadStep[] = [
+      { label: 'Uploading photo', status: fanPhoto ? 'waiting' : 'skipped', progress: 0 },
+      { label: 'Saving registration', status: 'waiting', progress: 0 },
+      { label: 'Sending confirmation email', status: 'waiting', progress: 0 },
+    ]
+    setUploadSteps(steps)
+    try {
+      // Upload photo if provided
+      let photo_url = ''
+      if (fanPhoto) {
+        patchStep(0, { status: 'uploading', progress: 0 })
+        photo_url = await uploadFileWithProgress(fanPhoto, 'membership/fan-photos', p => patchStep(0, { progress: p }))
+        patchStep(0, { status: 'done', progress: 100 })
+      }
+
+      patchStep(1, { status: 'uploading', progress: 50 })
+      await addDoc(collection(db, 'fans'), {
+        ...fanData,
+        photo_url,
+        type: 'fan',
+        status: 'active',
+        tc_agreed: true,
+        created_at: new Date().toISOString()
+      })
+      patchStep(1, { status: 'done', progress: 100 })
+
+      patchStep(2, { status: 'uploading', progress: 50 })
+      Promise.all([
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            to: fanData.email,
+            subject: 'Fan Registration Confirmation — Land Rover Club Tanzania',
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #16a34a;">Welcome to LRCT Fans! 🎉</h2>
+              <p>Dear ${fanData.full_name},</p>
+              <p>Thank you for registering as a fan with Land Rover Club Tanzania. We are excited to have you join our community!</p>
+              <p><strong>Your Registration Details:</strong></p>
+              <ul>
+                <li><strong>Name:</strong> ${fanData.full_name}</li>
+                <li><strong>Email:</strong> ${fanData.email}</li>
+                <li><strong>Phone:</strong> ${fanData.phone}</li>
+                <li><strong>City:</strong> ${fanData.city}</li>
+              </ul>
+              <p>You will now receive access to:</p>
+              <ul>
+                <li>Community updates and announcements</li>
+                <li>Invitations to public events</li>
+                <li>Monthly newsletter</li>
+              </ul>
+              <p>If you have any questions, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
+              <p>Best regards,<br/>Land Rover Club Tanzania Team</p>
+            </div>`
+          })
+        }).catch(e => console.error('User email failed:', e)),
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            to: 'landroverclubtz@gmail.com',
+            subject: `New Fan Registration: ${fanData.full_name}`,
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>New Fan Registration</h2>
+              <p><strong>Name:</strong> ${fanData.full_name}</p>
+              <p><strong>Email:</strong> ${fanData.email}</p>
+              <p><strong>Phone:</strong> ${fanData.phone}</p>
+              <p><strong>City:</strong> ${fanData.city}</p>
+              <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+            </div>`
+          })
+        }).catch(e => console.error('Admin email failed:', e))
+      ]).then(() => patchStep(2, { status: 'done', progress: 100 }))
+
+      setSubmitSuccess(true)
+    } catch (err: any) {
+      setSubmitError(err?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-}
 
   // ── Member form ───────────────────────────────────────────────────────────
   const [memberStep, setMemberStep] = useState<MemberStep>(1)
@@ -436,110 +446,149 @@ const Membership = () => {
   }
 
   const submitMember = async () => {
-  if (!stepValid(4)) return
-  setSubmitError(null)
-  setIsSubmitting(true)
-  const steps: UploadStep[] = [
-    { label: 'Saving application', status: 'waiting', progress: 0 },
-    { label: 'Sending confirmation email', status: 'waiting', progress: 0 },
-  ]
-  setUploadSteps(steps)
-  try {
-    setUploadSteps(s => s.map((st, i) => i === 0 ? { ...st, status: 'uploading', progress: 50 } : st))
-    await addDoc(collection(db, 'membership_applications'), {
-      full_name: personal.full_name,
-      email: personal.email,
-      phone: personal.phone,
-      vehicle_make: 'Land Rover',
-      vehicle_model: '',
-      message: personal.bio,
-      date_of_birth: personal.dob,
-      gender: personal.gender,
-      po_box: personal.po_box,
-      heard_about: personal.heard_about,
-      heard_other: personal.heard_other,
-      guarantor: { ...guarantor, signature: guarantorSignature },
-      applicant_signature: applicantSignature,
-      declaration_agreed: declarationAgreed,
-      tc_agreed: memberTcAgreed,
-      // Note: files must be submitted separately via email
-      photo_url: '', id_doc_url: '', payment_proof_url: '',
-      type: 'member', status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    
-    // Send confirmation emails (non-blocking - don't let email failures block submission)
-    setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'uploading', progress: 50 } : st))
-    Promise.all([
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({
-          to: personal.email,
-          subject: 'Membership Application Received — Land Rover Club Tanzania',
-          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #16a34a;">Application Received! ✓</h2>
-            <p>Dear ${personal.full_name},</p>
-            <p>Thank you for submitting your membership application to Land Rover Club Tanzania. We have received your application and it is under review.</p>
-            <p><strong>Application Details:</strong></p>
-            <ul>
-              <li><strong>Full Name:</strong> ${personal.full_name}</li>
-              <li><strong>Email:</strong> ${personal.email}</li>
-              <li><strong>Phone:</strong> ${personal.phone}</li>
-              <li><strong>Guarantor:</strong> ${guarantor.full_name}</li>
-            </ul>
-            <p>Our club committee will review your application and contact you within 7-10 business days with a decision.</p>
-            <p><strong>Next Steps:</strong></p>
-            <ul>
-              <li>We will verify your submitted documents</li>
-              <li>The committee will review your application</li>
-              <li>You will be contacted with the decision</li>
-            </ul>
-            <p>If you have any questions in the meantime, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
-            <p>Best regards,<br/>Land Rover Club Tanzania Committee</p>
-          </div>`
-        })
-      }).catch(e => console.error('User email failed:', e)),
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({
-          to: 'landroverclubtz@gmail.com',
-          subject: `New Membership Application: ${personal.full_name}`,
-          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>New Membership Application</h2>
-            <p><strong>Name:</strong> ${personal.full_name}</p>
-            <p><strong>Email:</strong> ${personal.email}</p>
-            <p><strong>Phone:</strong> ${personal.phone}</p>
-            <p><strong>Date of Birth:</strong> ${personal.dob}</p>
-            <p><strong>Gender:</strong> ${personal.gender}</p>
-            <p><strong>P.O. Box:</strong> ${personal.po_box}</p>
-            <p><strong>How They Heard About Us:</strong> ${personal.heard_about} ${personal.heard_other ? '(' + personal.heard_other + ')' : ''}</p>
-            <p><strong>Bio/Message:</strong> ${personal.bio}</p>
-            <hr style="border: 1px solid #ccc; margin: 20px 0;">
-            <p><strong>Guarantor Details:</strong></p>
-            <p><strong>Name:</strong> ${guarantor.full_name}</p>
-            <p><strong>Phone:</strong> ${guarantor.phone}</p>
-            <p><strong>Email:</strong> ${guarantor.email}</p>
-            <p><strong>Description:</strong> ${guarantor.description}</p>
-            <p><strong>Application Time:</strong> ${new Date().toLocaleString()}</p>
-          </div>`
-        })
-      }).catch(e => console.error('Admin email failed:', e))
-    ]).then(() => {
-      setUploadSteps(s => s.map((st, i) => i === 1 ? { ...st, status: 'done', progress: 100 } : st))
-    })
-    await new Promise(r => setTimeout(r, 500))
-    setSubmitSuccess(true)
-  } catch (err: any) {
-    setSubmitError(err?.message ?? 'Something went wrong. Please try again.')
-  } finally {
-    setIsSubmitting(false)
+    if (!stepValid(4)) return
+    setSubmitError(null)
+    setIsSubmitting(true)
+
+    const steps: UploadStep[] = [
+      { label: 'Uploading photo', status: memberPhoto ? 'waiting' : 'skipped', progress: 0 },
+      { label: 'Uploading ID document', status: idDoc ? 'waiting' : 'skipped', progress: 0 },
+      { label: 'Uploading payment proof', status: paymentProof ? 'waiting' : 'skipped', progress: 0 },
+      { label: 'Saving application', status: 'waiting', progress: 0 },
+      { label: 'Sending confirmation email', status: 'waiting', progress: 0 },
+    ]
+    setUploadSteps(steps)
+
+    try {
+      // Upload member photo
+      let photo_url = ''
+      if (memberPhoto) {
+        patchStep(0, { status: 'uploading', progress: 0 })
+        photo_url = await uploadFileWithProgress(memberPhoto, 'membership/photos', p => patchStep(0, { progress: p }))
+        patchStep(0, { status: 'done', progress: 100 })
+      }
+
+      // Upload ID document
+      let id_doc_url = ''
+      if (idDoc) {
+        patchStep(1, { status: 'uploading', progress: 0 })
+        id_doc_url = await uploadFileWithProgress(idDoc, 'membership/id-docs', p => patchStep(1, { progress: p }))
+        patchStep(1, { status: 'done', progress: 100 })
+      }
+
+      // Upload payment proof
+      let payment_proof_url = ''
+      if (paymentProof) {
+        patchStep(2, { status: 'uploading', progress: 0 })
+        payment_proof_url = await uploadFileWithProgress(paymentProof, 'membership/payment-proofs', p => patchStep(2, { progress: p }))
+        patchStep(2, { status: 'done', progress: 100 })
+      }
+
+      // Save to Firestore
+      patchStep(3, { status: 'uploading', progress: 50 })
+      await addDoc(collection(db, 'membership_applications'), {
+        full_name: personal.full_name,
+        email: personal.email,
+        phone: personal.phone,
+        vehicle_make: 'Land Rover',
+        vehicle_model: '',
+        message: personal.bio,
+        date_of_birth: personal.dob,
+        gender: personal.gender,
+        po_box: personal.po_box,
+        heard_about: personal.heard_about,
+        heard_other: personal.heard_other,
+        guarantor: { ...guarantor, signature: guarantorSignature },
+        applicant_signature: applicantSignature,
+        declaration_agreed: declarationAgreed,
+        tc_agreed: memberTcAgreed,
+        // ✅ All files now uploaded and saved
+        photo_url,
+        id_doc_url,
+        payment_proof_url,
+        attachment_urls: [photo_url, id_doc_url, payment_proof_url].filter(Boolean),
+        type: 'member',
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      patchStep(3, { status: 'done', progress: 100 })
+
+      // Send confirmation emails (non-blocking)
+      patchStep(4, { status: 'uploading', progress: 50 })
+      Promise.all([
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            to: personal.email,
+            subject: 'Membership Application Received — Land Rover Club Tanzania',
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #16a34a;">Application Received! ✓</h2>
+              <p>Dear ${personal.full_name},</p>
+              <p>Thank you for submitting your membership application to Land Rover Club Tanzania. We have received your application and it is under review.</p>
+              <p><strong>Application Details:</strong></p>
+              <ul>
+                <li><strong>Full Name:</strong> ${personal.full_name}</li>
+                <li><strong>Email:</strong> ${personal.email}</li>
+                <li><strong>Phone:</strong> ${personal.phone}</li>
+                <li><strong>Guarantor:</strong> ${guarantor.full_name}</li>
+              </ul>
+              <p>Our club committee will review your application and contact you within 7-10 business days with a decision.</p>
+              <p><strong>Next Steps:</strong></p>
+              <ul>
+                <li>We will verify your submitted documents</li>
+                <li>The committee will review your application</li>
+                <li>You will be contacted with the decision</li>
+              </ul>
+              <p>If you have any questions in the meantime, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
+              <p>Best regards,<br/>Land Rover Club Tanzania Committee</p>
+            </div>`
+          })
+        }).catch(e => console.error('User email failed:', e)),
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            to: 'landroverclubtz@gmail.com',
+            subject: `New Membership Application: ${personal.full_name}`,
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>New Membership Application</h2>
+              <p><strong>Name:</strong> ${personal.full_name}</p>
+              <p><strong>Email:</strong> ${personal.email}</p>
+              <p><strong>Phone:</strong> ${personal.phone}</p>
+              <p><strong>Date of Birth:</strong> ${personal.dob}</p>
+              <p><strong>Gender:</strong> ${personal.gender}</p>
+              <p><strong>P.O. Box:</strong> ${personal.po_box}</p>
+              <p><strong>How They Heard About Us:</strong> ${personal.heard_about} ${personal.heard_other ? '(' + personal.heard_other + ')' : ''}</p>
+              <p><strong>Bio/Message:</strong> ${personal.bio}</p>
+              <hr style="border: 1px solid #ccc; margin: 20px 0;">
+              <h3>Guarantor Details</h3>
+              <p><strong>Name:</strong> ${guarantor.full_name}</p>
+              <p><strong>Phone:</strong> ${guarantor.phone}</p>
+              <p><strong>Email:</strong> ${guarantor.email}</p>
+              <p><strong>Description:</strong> ${guarantor.description}</p>
+              <hr style="border: 1px solid #ccc; margin: 20px 0;">
+              <h3>Uploaded Documents</h3>
+              ${photo_url ? `<p><strong>Photo:</strong> <a href="${photo_url}">View Photo</a></p>` : ''}
+              ${id_doc_url ? `<p><strong>ID Document:</strong> <a href="${id_doc_url}">View ID</a></p>` : ''}
+              ${payment_proof_url ? `<p><strong>Payment Proof:</strong> <a href="${payment_proof_url}">View Receipt</a></p>` : ''}
+              <p><strong>Application Time:</strong> ${new Date().toLocaleString()}</p>
+            </div>`
+          })
+        }).catch(e => console.error('Admin email failed:', e))
+      ]).then(() => patchStep(4, { status: 'done', progress: 100 }))
+
+      await new Promise(r => setTimeout(r, 500))
+      setSubmitSuccess(true)
+    } catch (err: any) {
+      setSubmitError(err?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-}
 
   const resetAll = () => {
     setSubmitSuccess(false); setSubmitError(null)
@@ -684,7 +733,6 @@ const Membership = () => {
                   <input type="text" required value={fanData.city} onChange={e => setFanData({...fanData, city: e.target.value})} className={inputCls} placeholder="Dar es Salaam" />
                 </Field>
 
-                {/* T&C — mandatory */}
                 <div className={`flex items-start gap-3 p-4 border-2 rounded-xl transition-colors ${fanTcAgreed ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-green-300'}`}>
                   <input type="checkbox" id="fan-tc" checked={fanTcAgreed} onChange={e => setFanTcAgreed(e.target.checked)}
                     className="mt-0.5 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer flex-shrink-0" />
@@ -882,7 +930,7 @@ const Membership = () => {
                 </div>
               )}
 
-              {/* STEP 4 — Declaration + Signature + T&C at end */}
+              {/* STEP 4 */}
               {memberStep === 4 && (
                 <div className="space-y-5">
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-100 pb-2">Tamko la Mwombaji — Applicant Declaration</p>
@@ -908,7 +956,6 @@ const Membership = () => {
                     <SignatureCanvas onChange={setApplicantSignature} />
                   </Field>
 
-                  {/* T&C at the very end — mandatory before submit */}
                   <div className={`flex items-start gap-3 p-4 border-2 rounded-xl transition-colors ${memberTcAgreed ? 'border-gray-400 bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
                     <input type="checkbox" id="member-tc" checked={memberTcAgreed} onChange={e => setMemberTcAgreed(e.target.checked)}
                       className="mt-0.5 h-5 w-5 rounded border-gray-300 text-gray-900 focus:ring-gray-500 cursor-pointer flex-shrink-0" />
