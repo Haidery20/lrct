@@ -130,30 +130,37 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   const isEvent = data.type === 'event'
 
   // ── HEADER ────────────────────────────────────────────────────────────────
-  doc.setFillColor(21, 128, 61)
-  rect(0, 0, pageW, 30, 'F')
+// White background
+doc.setFillColor(255, 255, 255)
+rect(0, 0, pageW, 30, 'F')
 
-  // Logo top-left
-  if (data.logo_base64) {
-    try {
-      doc.addImage(data.logo_base64, 'PNG', margin, 4, 20, 20)
-    } catch { /* skip */ }
-  }
+// Logo top-left
+if (data.logo_base64) {
+  try {
+    doc.addImage(data.logo_base64, 'PNG', margin, 4, 20, 20)
+  } catch { /* skip */ }
+}
 
-  // Title centered (shifted right to clear logo)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(15)
-  doc.setTextColor(255, 255, 255)
-  text('Land Rover Club Tanzania', pageW / 2 + 10, 13, { align: 'center' })
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
-  doc.setTextColor(220, 252, 231)
-  const subtitle = isFan
-    ? 'Fomu ya Usajili wa Shauku (Fan)  ·  Fan Registration Form'
-    : isEvent
-    ? 'Fomu ya Usajili wa Tukio  ·  Event Registration Form'
-    : 'Fomu ya Maombi ya Uanachama  ·  Membership Application Form'
-  text(subtitle, pageW / 2 + 10, 22, { align: 'center' })
+// Title centered (shifted right to clear logo)
+doc.setFont('helvetica', 'bold')
+doc.setFontSize(15)
+doc.setTextColor(17, 24, 39)
+text('Land Rover Club Tanzania', pageW / 2 + 10, 13, { align: 'center' })
+doc.setFont('helvetica', 'normal')
+doc.setFontSize(8.5)
+doc.setTextColor(80, 80, 80)
+const subtitle = isFan
+  ? 'Fomu ya Usajili wa Shauku (Fan)  ·  Fan Registration Form'
+  : isEvent
+  ? 'Fomu ya Usajili wa Tukio  ·  Event Registration Form'
+  : 'Fomu ya Maombi ya Uanachama  ·  Membership Application Form'
+text(subtitle, pageW / 2 + 10, 22, { align: 'center' })
+
+// Green accent line below header
+doc.setDrawColor(21, 128, 61)
+doc.setLineWidth(1.2)
+line(0, 30, pageW, 30)
+doc.setLineWidth(0.2) // reset
 
   // White strip below header
   y = 30
@@ -171,14 +178,16 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
     text(`Event: ${data.event_title || 'LRCT Event'}`, pageW - margin, y + 7, { align: 'right' })
   }
 
-  // Photo box — right aligned, starts at y=30, height 34
-  const photoX = pageW - margin - 26
-  const photoY = y + 1
-  const photoH = 34
+  // Photo box — only for fan and member registrations
+const photoX = pageW - margin - 26
+const photoY = y + 1
+const photoH = 34
+
+if (!isEvent) {
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(160, 160, 160)
   rect(photoX, photoY, 26, photoH, 'FD')
-  
+
   if (photoBase64) {
     try {
       doc.addImage(photoBase64, 'JPEG', photoX + 1, photoY + 1, 24, photoH - 2)
@@ -196,9 +205,10 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
     text('PICHA', photoX + 13, photoY + 14, { align: 'center' })
     text('PHOTO', photoX + 13, photoY + 20, { align: 'center' })
   }
+}
 
-  // Content starts below both the strip and the photo box
-  y = photoY + photoH + 6  // = 71 — safely below photo
+// Content starts below the strip (and photo box if shown)
+y = isEvent ? y + 10 : photoY + photoH + 6
 
   const col1x = margin
   const col2x = margin + contentW / 2 + 2
@@ -219,7 +229,7 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
     y += 13
   } else if (isEvent) {
     field('Full Name / Jina Kamili', data.full_name, col1x, col1x + 35, y, halfW - 35)
-    field('Event Date / Tarehe', data.event_date || '—', col2x, col2x + 25, y, halfW - 25)
+    field('Event Date / Tarehe', data.event_date || '—', col2x, col2x + 30, y, halfW - 30)
     y += 11
     field('Email / Barua Pepe', data.email, col1x, col1x + 30, y, halfW - 35)
     field('Phone / Simu', data.phone, col2x, col2x + 25, y, halfW - 30)
