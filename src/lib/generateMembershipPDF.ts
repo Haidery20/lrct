@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf'
 
 interface MembershipPDFData {
-  type?: 'fan' | 'member'
+  type?: 'fan' | 'member' | 'event'
   full_name: string
   dob?: string
   gender?: string
@@ -10,8 +10,8 @@ interface MembershipPDFData {
   po_box?: string
   bio?: string
   heard_about?: string
-  guarantor_name: string
-  guarantor_phone: string
+  guarantor_name?: string
+  guarantor_phone?: string
   guarantor_email?: string
   guarantor_po_box?: string
   applicant_signature?: string | null
@@ -20,6 +20,10 @@ interface MembershipPDFData {
   photo_url?: string         // Passport photo URL
   id_doc_url?: string        // Cloudinary URL
   payment_proof_url?: string // Cloudinary URL
+  event_title?: string
+  event_date?: string
+  event_location?: string
+  message?: string
 }
 
 // Fetch a remote URL and return base64 data URL
@@ -123,6 +127,7 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
     : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
 
   const isFan = data.type === 'fan'
+  const isEvent = data.type === 'event'
 
   // ── HEADER ────────────────────────────────────────────────────────────────
   doc.setFillColor(21, 128, 61)
@@ -145,6 +150,8 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   doc.setTextColor(220, 252, 231)
   const subtitle = isFan
     ? 'Fomu ya Usajili wa Shauku (Fan)  ·  Fan Registration Form'
+    : isEvent
+    ? 'Fomu ya Usajili wa Tukio  ·  Event Registration Form'
     : 'Fomu ya Maombi ya Uanachama  ·  Membership Application Form'
   text(subtitle, pageW / 2 + 10, 22, { align: 'center' })
 
@@ -156,6 +163,13 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   doc.setFontSize(8)
   doc.setTextColor(100, 100, 100)
   text(`Date Submitted: ${submittedDate}`, margin, y + 7)
+
+  if (isEvent) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(21, 128, 61)
+    text(`Event: ${data.event_title || 'LRCT Event'}`, pageW - margin, y + 7, { align: 'right' })
+  }
 
   // Photo box — right aligned, starts at y=30, height 34
   const photoX = pageW - margin - 26
@@ -191,8 +205,9 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   const halfW = contentW / 2 - 6  // safe column value width
 
   // ── SECTION 1 ─────────────────────────────────────────────────────────────
-  checkY(isFan ? 40 : 55)
-  y = sectionHeader('1. TAARIFA BINAFSI  ·  PERSONAL INFORMATION', y) + 6
+  checkY(isFan ? 40 : isEvent ? 45 : 55)
+  const personalHeader = isEvent ? '1. TAARIFA ZA MSAJILIWA  ·  REGISTRANT INFORMATION' : '1. TAARIFA BINAFSI  ·  PERSONAL INFORMATION'
+  y = sectionHeader(personalHeader, y) + 6
 
   if (isFan) {
     field('Full Name / Jina Kamili', data.full_name, col1x, col1x + 35, y, contentW - 40)
@@ -202,6 +217,28 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
     y += 11
     field('Location / Mahali', data.po_box || '—', col1x, col1x + 30, y, contentW - 35)
     y += 13
+  } else if (isEvent) {
+    field('Full Name / Jina Kamili', data.full_name, col1x, col1x + 35, y, halfW - 35)
+    field('Event Date / Tarehe', data.event_date || '—', col2x, col2x + 25, y, halfW - 25)
+    y += 11
+    field('Email / Barua Pepe', data.email, col1x, col1x + 30, y, halfW - 35)
+    field('Phone / Simu', data.phone, col2x, col2x + 25, y, halfW - 30)
+    y += 11
+    field('Location / Mahali', data.event_location || '—', col1x, col1x + 30, y, contentW - 35)
+    y += 13
+    if (data.message) {
+      checkY(24)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 100, 100)
+      text('Message / Notes', col1x, y)
+      y += 5
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20)
+      const msgLines = doc.splitTextToSize(data.message, contentW - 4)
+      const msgH = msgLines.length * 4.5 + 6
+      doc.setFillColor(252, 252, 252); doc.setDrawColor(220, 220, 220)
+      rect(col1x - 1, y - 4, contentW + 2, msgH, 'FD')
+      doc.text(msgLines, col1x + 2, y)
+      y += msgH + 4
+    }
   } else {
     field('Full Name / Jina Kamili', data.full_name, col1x, col1x + 35, y, halfW - 35)
     field('Gender / Jinsia',
@@ -223,37 +260,37 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
       field('How did you hear about us?', data.heard_about || '—', col1x, col1x + 48, y, contentW - 50)
       y += 13
     }
-  }
 
-  if (data.bio && !isFan) {
-    checkY(24)
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 100, 100)
-    text('Brief Profile / Wasifu kwa Ufipi', col1x, y)
-    y += 5
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20)
-    const bioLines = doc.splitTextToSize(data.bio, contentW - 4)
-    const bioH = bioLines.length * 4.5 + 6
-    doc.setFillColor(252, 252, 252); doc.setDrawColor(220, 220, 220)
-    rect(col1x - 1, y - 4, contentW + 2, bioH, 'FD')
-    doc.text(bioLines, col1x + 2, y)
-    y += bioH + 4
+    if (data.bio && !isFan) {
+      checkY(24)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 100, 100)
+      text('Brief Profile / Wasifu kwa Ufipi', col1x, y)
+      y += 5
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20)
+      const bioLines = doc.splitTextToSize(data.bio, contentW - 4)
+      const bioH = bioLines.length * 4.5 + 6
+      doc.setFillColor(252, 252, 252); doc.setDrawColor(220, 220, 220)
+      rect(col1x - 1, y - 4, contentW + 2, bioH, 'FD')
+      doc.text(bioLines, col1x + 2, y)
+      y += bioH + 4
+    }
   }
 
   // ── SECTION 2 ─────────────────────────────────────────────────────────────
-  if (!isFan) {
+  if (!isFan && !isEvent) {
     checkY(44)
     y = sectionHeader('2. MDHAMINI  ·  GUARANTOR DETAILS', y) + 6
 
-    field('Full Name / Jina la Mdhamini', data.guarantor_name, col1x, col1x + 33, y, halfW - 35)
-    field('P.O. Box', data.guarantor_po_box || '—', col2x, col2x + 22, y, halfW - 24)
+    field('Full Name / Jina la Mdhamini', data.guarantor_name || '—', col1x, col1x + 35, y, halfW - 35)
+    field('P.O. Box', data.guarantor_po_box || '—', col2x, col2x + 30, y, halfW - 30)
     y += 11
-    field('Phone / Simu', data.guarantor_phone, col1x, col1x + 24, y, halfW - 26)
-    field('Email / Barua Pepe', data.guarantor_email || '—', col2x, col2x + 24, y, halfW - 26)
+    field('Phone / Simu', data.guarantor_phone || '—', col1x, col1x + 25, y, halfW - 25)
+    field('Email / Barua Pepe', data.guarantor_email || '—', col2x, col2x + 30, y, halfW - 30)
     y += 14
   }
 
   // ── SECTION 3 ─────────────────────────────────────────────────────────────
-  if (!isFan) {
+  if (!isFan && !isEvent) {
     checkY(62)
     y = sectionHeader('3. ADA NA MICHANGO  ·  FEES & CONTRIBUTIONS', y) + 6
 
@@ -299,11 +336,13 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
 
   // ── SECTION 4 ─────────────────────────────────────────────────────────────
   checkY(55)
-  const sectionTitle = isFan ? '2. TAMKO LA MWOMBAJI  ·  FAN DECLARATION' : '4. TAMKO LA MWOMBAJI  ·  APPLICANT DECLARATION'
+  const sectionTitle = isFan ? '2. TAMKO LA MWOMBAJI  ·  FAN DECLARATION' : isEvent ? '2. TAMKO LA MSAJILIWA  ·  REGISTRANT DECLARATION' : '4. TAMKO LA MWOMBAJI  ·  APPLICANT DECLARATION'
   y = sectionHeader(sectionTitle, y) + 6
 
   const declaration = isFan
     ? `Mimi ${data.full_name || '_______________'} ninasajiliwa kama shauku (Fan) wa Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.`
+    : isEvent
+    ? `Mimi ${data.full_name || '_______________'} ninajisajili kushiriki katika tukio la "${data.event_title || 'LRCT Event'}" linaloandaliwa na Tanzania Land Rover Klabu. Ninaahidi kufuata taratibu zote za usalama na maelekezo yatakayotolewa na viongozi wa klabu wakati wa tukio hili.`
     : `Mimi ${data.full_name || '_______________'} ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.`
   const declLines = doc.splitTextToSize(declaration, contentW - 6)
   const declH = declLines.length * 4.5 + 10
@@ -318,7 +357,8 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   checkY(30)
   const sigW = contentW / 2 - 5
   doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(60, 60, 60)
-  text('Applicant Signature / Sahihi ya Mwombaji', col1x, y)
+  const sigLabel = isEvent ? 'Registrant Signature / Sahihi ya Msajiliwa' : 'Applicant Signature / Sahihi ya Mwombaji'
+  text(sigLabel, col1x, y)
   text('Date / Tarehe', col2x, y)
   y += 4
 
@@ -354,9 +394,10 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   })
 
   // ── ATTACHMENT: ID DOCUMENT ───────────────────────────────────────────────
-  if (idDocBase64 && !isFan) {
+  if (idDocBase64) {
     doc.addPage(); y = 20
-    y = sectionHeader('KIAMBATISHO 1  ·  ID / PASSPORT COPY', y) + 8
+    const attachmentTitle = isFan ? 'KIAMBATISHO 1  ·  NAKALA YA KITAMBULISHO  ·  ID COPY' : 'KIAMBATISHO 1  ·  ID / PASSPORT COPY'
+    y = sectionHeader(attachmentTitle, y) + 8
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(80, 80, 80)
     text(`Applicant: ${data.full_name}  ·  Submitted: ${submittedDate}`, col1x, y)
     y += 8

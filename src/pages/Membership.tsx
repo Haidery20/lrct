@@ -335,14 +335,17 @@ const Membership = () => {
   const [fanPhoto, setFanPhoto] = useState<File | null>(null)
   const [fanPhotoPreview, setFanPhotoPreview] = useState<string | null>(null)
   const [fanSignature, setFanSignature] = useState<string | null>(null)
+  const [fanIdDoc, setFanIdDoc] = useState<File | null>(null)
+  const [fanIdDocName, setFanIdDocName] = useState<string | null>(null)
 
   const submitFan = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fanTcAgreed || !fanSignature) return
+    if (!fanTcAgreed || !fanSignature || !fanIdDoc) return
     setSubmitError(null)
     setIsSubmitting(true)
     const steps: UploadStep[] = [
       { label: 'Uploading photo', status: fanPhoto ? 'waiting' : 'skipped', progress: 0 },
+      { label: 'Uploading ID document', status: 'waiting', progress: 0 },
       { label: 'Saving registration', status: 'waiting', progress: 0 },
       { label: 'Sending confirmation email', status: 'waiting', progress: 0 },
     ]
@@ -356,22 +359,31 @@ const Membership = () => {
         patchStep(0, { status: 'done', progress: 100 })
       }
 
-      patchStep(1, { status: 'uploading', progress: 50 })
+      // Upload ID document if provided
+      let id_doc_url = ''
+      if (fanIdDoc) {
+        patchStep(1, { status: 'uploading', progress: 0 })
+        id_doc_url = await uploadFileWithProgress(fanIdDoc, 'membership/fan-id-docs', p => patchStep(1, { progress: p }))
+        patchStep(1, { status: 'done', progress: 100 })
+      }
+
+      patchStep(2, { status: 'uploading', progress: 50 })
       await addDoc(collection(db, 'fans'), {
         ...fanData,
         photo_url,
+        id_doc_url,
         applicant_signature: fanSignature,
         type: 'fan',
         status: 'active',
         tc_agreed: true,
         created_at: new Date().toISOString()
       })
-      patchStep(1, { status: 'done', progress: 100 })
+      patchStep(2, { status: 'done', progress: 100 })
 
       // Send confirmation emails
-      patchStep(2, { status: 'uploading', progress: 50 })
+      patchStep(3, { status: 'uploading', progress: 50 })
       await sendFanConfirmationEmail(fanData)
-      patchStep(2, { status: 'done', progress: 100 })
+      patchStep(3, { status: 'done', progress: 100 })
 
       setSubmitSuccess(true)
     } catch (err: any) {
@@ -504,6 +516,8 @@ const Membership = () => {
     setSubmitSuccess(false); setSubmitError(null)
     setTab('choose'); setMemberStep(1)
     setUploadSteps([]); setFanTcAgreed(false); setMemberTcAgreed(false)
+    setFanPhoto(null); setFanPhotoPreview(null)
+    setFanSignature(null); setFanIdDoc(null); setFanIdDocName(null)
   }
 
   // ── Success ───────────────────────────────────────────────────────────────
@@ -542,7 +556,9 @@ const Membership = () => {
       console.error('Logo fetch error:', e)
     }
 
-    const id_doc_url = idDoc ? URL.createObjectURL(idDoc) : ''
+    const id_doc_url = tab === 'fan' 
+      ? (fanIdDoc ? URL.createObjectURL(fanIdDoc) : '')
+      : (idDoc ? URL.createObjectURL(idDoc) : '')
     const payment_proof_url = paymentProof ? URL.createObjectURL(paymentProof) : ''
     const photo_url = tab === 'fan' 
       ? (fanPhoto ? URL.createObjectURL(fanPhoto) : '') 
@@ -724,6 +740,24 @@ const Membership = () => {
                   <input type="text" required value={fanData.city} onChange={e => setFanData({...fanData, city: e.target.value})} className={inputCls} placeholder="Dar es Salaam" />
                 </Field>
 
+                <Field label="ID / Passport Copy — Nakala ya Kitambulisho" required hint="Upload a copy of your National ID, Passport or Driver's License (Max 5MB)">
+                  <label className={`flex items-center gap-3 w-full py-3 px-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${fanIdDoc ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-400'}`}>
+                    <Upload className={`h-5 w-5 ${fanIdDoc ? 'text-green-600' : 'text-gray-400'}`} />
+                    <span className={`text-sm ${fanIdDoc ? 'text-green-700' : 'text-gray-500'}`}>{fanIdDocName ?? 'Click to upload ID, Passport or License'}</span>
+                    <input type="file" required accept="image/jpeg,image/png,image/jpg" className="hidden" onChange={e => { 
+                      const f = e.target.files?.[0]; 
+                      if (f) { 
+                        if (f.size > 5 * 1024 * 1024) {
+                          alert('File size exceeds 5MB limit');
+                          return;
+                        }
+                        setFanIdDoc(f); 
+                        setFanIdDocName(f.name) 
+                      } 
+                    }} />
+                  </label>
+                </Field>
+
                 <Field label="Applicant Signature" required hint="Please draw your signature below">
                   <SignatureCanvas onChange={setFanSignature} />
                 </Field>
@@ -750,11 +784,17 @@ const Membership = () => {
                   </p>
                 )}
 
+                {!fanIdDoc && fanTcAgreed && fanSignature && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1 -mt-2">
+                    <Shield className="h-3 w-3 flex-shrink-0" /> ID document is mandatory.
+                  </p>
+                )}
+
                 {submitError && (
                   <p className="text-red-600 text-sm bg-red-50 border border-red-200 py-3 px-4 rounded-lg">{submitError}</p>
                 )}
 
-                <button type="submit" disabled={!fanTcAgreed || !fanSignature}
+                <button type="submit" disabled={!fanTcAgreed || !fanSignature || !fanIdDoc}
                   className="w-full bg-green-600 text-white py-4 rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                   Register as Fan
                 </button>

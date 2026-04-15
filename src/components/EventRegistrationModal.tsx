@@ -1,10 +1,102 @@
 'use client'
-import React, { useState } from 'react'
-import { X, User, Mail, Phone, MessageSquare, CheckCircle } from 'lucide-react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { X, User, Mail, Phone, MessageSquare, CheckCircle, PenLine, RotateCcw, Download, Loader2 } from 'lucide-react'
 import { collection, addDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { sendEventConfirmationEmail } from '../lib/email'
+import { generateMembershipPDF } from '../lib/generateMembershipPDF'
 import type { Event } from '../lib/types'
+
+// ── Signature Canvas (Reused from Membership) ─────────────────────────────────
+const SignatureCanvas: React.FC<{ onChange: (dataUrl: string | null) => void }> = ({ onChange }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isDrawing = useRef(false)
+  const [hasSignature, setHasSignature] = useState(false)
+
+  const getPos = (e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    if ('touches' in e) return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY }
+  }
+
+  const startDraw = useCallback((e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    isDrawing.current = true
+    const pos = getPos(e, canvas)
+    ctx.beginPath(); ctx.moveTo(pos.x, pos.y)
+  }, [])
+
+  const draw = useCallback((e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+    if (!isDrawing.current) return
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    const pos = getPos(e, canvas)
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1a1a1a'
+    ctx.lineTo(pos.x, pos.y); ctx.stroke()
+    setHasSignature(true)
+  }, [])
+
+  const stopDraw = useCallback(() => {
+    if (!isDrawing.current) return
+    isDrawing.current = false
+    const canvas = canvasRef.current
+    if (canvas) onChange(canvas.toDataURL('image/png'))
+  }, [onChange])
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return
+    canvas.addEventListener('mousedown', startDraw)
+    canvas.addEventListener('mousemove', draw)
+    canvas.addEventListener('mouseup', stopDraw)
+    canvas.addEventListener('mouseleave', stopDraw)
+    canvas.addEventListener('touchstart', startDraw, { passive: false })
+    canvas.addEventListener('touchmove', draw, { passive: false })
+    canvas.addEventListener('touchend', stopDraw)
+    return () => {
+      canvas.removeEventListener('mousedown', startDraw)
+      canvas.removeEventListener('mousemove', draw)
+      canvas.removeEventListener('mouseup', stopDraw)
+      canvas.removeEventListener('mouseleave', stopDraw)
+      canvas.removeEventListener('touchstart', startDraw)
+      canvas.removeEventListener('touchmove', draw)
+      canvas.removeEventListener('touchend', stopDraw)
+    }
+  }, [startDraw, draw, stopDraw])
+
+  const clear = () => {
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    setHasSignature(false); onChange(null)
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="relative border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-white" style={{ touchAction: 'none' }}>
+        <canvas ref={canvasRef} width={600} height={150} className="w-full cursor-crosshair block" style={{ height: '150px' }} />
+        {!hasSignature && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex items-center gap-2 text-gray-400">
+              <PenLine className="h-4 w-4" />
+              <span className="text-sm">Draw your signature here</span>
+            </div>
+          </div>
+        )}
+        <div className="absolute bottom-4 left-4 right-4 border-b border-gray-300" />
+      </div>
+      {hasSignature && (
+        <button type="button" onClick={clear} className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-500 transition-colors">
+          <RotateCcw className="h-3 w-3" /> Clear signature
+        </button>
+      )}
+    </div>
+  )
+}
 
 interface EventRegistrationModalProps {
   event: Event
@@ -18,6 +110,7 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
     phone: '',
     message: '',
   })
+  const [signature, setSignature] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
@@ -28,6 +121,10 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!signature) {
+      setError('Signature is required to register.')
+      return
+    }
     setSubmitting(true)
     setError('')
 
@@ -37,6 +134,7 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
         event_title: event.title,
         event_date: event.event_date,
         ...form,
+        signature,
         registered_at: new Date().toISOString(),
         status: 'pending',
       })
@@ -64,6 +162,46 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    })
+  }
+
+  const handleDownloadPDF = async () => {
+    let logo_base_64: string | undefined
+    try {
+      const res = await fetch('/lrct.svg')
+      const svgText = await res.text()
+      logo_base_64 = await new Promise<string>((resolve) => {
+        const img = new Image()
+        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' })
+        const url = URL.createObjectURL(svgBlob)
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const size = 512
+          canvas.width = size; canvas.height = size
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.clearRect(0, 0, size, size)
+            ctx.drawImage(img, 0, 0, size, size)
+            resolve(canvas.toDataURL('image/png'))
+          }
+          URL.revokeObjectURL(url)
+        }
+        img.src = url
+      })
+    } catch (e) { console.error('Logo fetch error:', e) }
+
+    await generateMembershipPDF({
+      type: 'event',
+      full_name: form.full_name,
+      email: form.email,
+      phone: form.phone,
+      message: form.message,
+      event_title: event.title,
+      event_date: formatDate(event.event_date),
+      event_location: event.location,
+      applicant_signature: signature,
+      submitted_at: new Date().toISOString(),
+      logo_base64: logo_base_64,
     })
   }
 
@@ -103,12 +241,21 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
                 Thank you <strong>{form.full_name}</strong>! A confirmation email has been sent to <strong>{form.email}</strong>.
               </p>
               <p className="text-gray-400 text-xs mb-6">We'll be in touch with further details closer to the event.</p>
-              <button
-                onClick={onClose}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors"
-              >
-                Done
-              </button>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Download className="h-4 w-4" /> Download Registration PDF
+                </button>
+                <button
+                  onClick={onClose}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -180,6 +327,13 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
                     className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-green-400 transition-colors resize-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">
+                  Your Signature *
+                </label>
+                <SignatureCanvas onChange={setSignature} />
               </div>
 
               {error && (
