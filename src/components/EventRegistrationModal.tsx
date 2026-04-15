@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { X, User, Mail, Phone, MessageSquare, CheckCircle } from 'lucide-react'
 import { collection, addDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
+import { sendEventConfirmationEmail } from '../lib/email'
 import type { Event } from '../lib/types'
 
 interface EventRegistrationModalProps {
@@ -39,6 +40,18 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
         registered_at: new Date().toISOString(),
         status: 'pending',
       })
+
+      // Send confirmation emails (non-blocking)
+      sendEventConfirmationEmail({
+        name: form.full_name,
+        email: form.email,
+        phone: form.phone,
+        event_title: event.title,
+        event_date: event.event_date,
+        event_location: event.location,
+        event_time: event.time,
+      }).catch(err => console.error('Email failed:', err))
+
       setSubmitted(true)
     } catch (err) {
       setError('Failed to register. Please try again.')
@@ -86,9 +99,10 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">You're Registered!</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                Thank you <strong>{form.full_name}</strong>! We'll be in touch at <strong>{form.email}</strong> with further details.
+              <p className="text-gray-500 text-sm mb-2">
+                Thank you <strong>{form.full_name}</strong>! A confirmation email has been sent to <strong>{form.email}</strong>.
               </p>
+              <p className="text-gray-400 text-xs mb-6">We'll be in touch with further details closer to the event.</p>
               <button
                 onClick={onClose}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors"

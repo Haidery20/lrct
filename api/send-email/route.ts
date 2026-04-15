@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ],
         from: {
           email: "info@landroverclub.or.tz",
-          name: "Land Rover Club Tanzania",
+          name: "LandRover Club Tanzania",
         },
         content: [
           {

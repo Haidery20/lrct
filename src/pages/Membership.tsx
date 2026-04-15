@@ -1,9 +1,10 @@
 "use client"
-
+import { generateMembershipPDF } from '../lib/generateMembershipPDF'
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Users, Heart, Shield, Check, Upload, ArrowLeft, CheckCircle, ChevronRight, ChevronLeft, PenLine, RotateCcw, X, ScrollText, Loader2 } from "lucide-react"
 import { collection, addDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
+import { sendFanConfirmationEmail, sendMemberConfirmationEmail } from '../lib/email'
 
 type Tab = 'choose' | 'fan' | 'member'
 type MemberStep = 1 | 2 | 3 | 4
@@ -96,7 +97,7 @@ const FAN_TCS = [
   { title: "1. Who Can Register as a Fan", body: "Membership as a Fan is open to any person who has an interest in Land Rovers and the Land Rover Club Tanzania (LRCT) community. You do not need to own a Land Rover to register as a Fan. Fans must be 16 years of age or older. Registering under a false identity is strictly prohibited." },
   { title: "2. Fan Benefits", body: "As a registered Fan, you will receive access to LRCT community updates, newsletters, and invitations to public club events. Fan status does not confer voting rights, access to members-only events, or eligibility for club office. Benefits are provided at the discretion of the club committee and may change without prior notice." },
   { title: "3. Conduct & Community Standards", body: "All Fans are ambassadors of the LRCT community. You agree to engage respectfully with all club members and fellow fans across all LRCT platforms, events, and communications. Harassment, discrimination, hate speech, or behaviour that brings the club into disrepute will result in immediate removal from the fan register without notice." },
-  { title: "4. Use of Your Information", body: "By registering, you consent to LRCT storing and using your name, email address, phone number, location, and profile photo solely for club communication and record-keeping purposes. Your information will not be sold or shared with third parties outside of club operations. You may request removal of your data at any time by contacting landroverclubtz@gmail.com." },
+  { title: "4. Use of Your Information", body: "By registering, you consent to LRCT storing and using your name, email address, phone number, location, and profile photo solely for club communication and record-keeping purposes. Your information will not be sold or shared with third parties outside of club operations. You may request removal of your data at any time by contacting info@landroverclub.or.tz." },
   { title: "5. Events & Activities", body: "Fans who attend LRCT public events do so at their own risk. LRCT accepts no liability for injury, loss, or damage sustained during events. Fans are expected to comply with all safety briefings and instructions given by club organisers at any event." },
   { title: "6. Transition to Full Membership", body: "Fan registration does not guarantee acceptance as a full club member. A separate membership application, guarantor, and payment of the prescribed fees are required for full membership." },
   { title: "7. Termination of Fan Status", body: "LRCT reserves the right to remove any individual from the fan register at any time for breach of these terms, conduct unbecoming, or at the discretion of the club committee. No fees are involved and removal carries no right of appeal." },
@@ -139,7 +140,7 @@ const TCModal: React.FC<{ type: TCType; onClose: () => void }> = ({ type, onClos
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900 leading-tight">{title}</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Land Rover Club Tanzania · landroverclubtz@gmail.com</p>
+              <p className="text-xs text-gray-500 mt-0.5">Land Rover Club Tanzania · info@landroverclub.or.tz</p>
             </div>
           </div>
           <button onClick={onClose} className="ml-4 p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
@@ -157,7 +158,7 @@ const TCModal: React.FC<{ type: TCType; onClose: () => void }> = ({ type, onClos
             </div>
           ))}
           <div className="pt-4 border-t border-gray-100 text-xs text-gray-400">
-            These terms are governed by the laws of the United Republic of Tanzania. For questions, contact the LRCT Secretary at landroverclubtz@gmail.com or P.O. Box 77, Morogoro, Tanzania.
+            These terms are governed by the laws of the United Republic of Tanzania. For questions, contact the LRCT Secretary at info@landroverclub.or.tz or P.O. Box 77, Morogoro, Tanzania.
           </div>
         </div>
         <div className="p-6 border-t border-gray-100 flex-shrink-0">
@@ -333,10 +334,11 @@ const Membership = () => {
   const [fanData, setFanData] = useState({ full_name: '', email: '', phone: '', city: '' })
   const [fanPhoto, setFanPhoto] = useState<File | null>(null)
   const [fanPhotoPreview, setFanPhotoPreview] = useState<string | null>(null)
+  const [fanSignature, setFanSignature] = useState<string | null>(null)
 
   const submitFan = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fanTcAgreed) return
+    if (!fanTcAgreed || !fanSignature) return
     setSubmitError(null)
     setIsSubmitting(true)
     const steps: UploadStep[] = [
@@ -358,6 +360,7 @@ const Membership = () => {
       await addDoc(collection(db, 'fans'), {
         ...fanData,
         photo_url,
+        applicant_signature: fanSignature,
         type: 'fan',
         status: 'active',
         tc_agreed: true,
@@ -365,55 +368,10 @@ const Membership = () => {
       })
       patchStep(1, { status: 'done', progress: 100 })
 
+      // Send confirmation emails
       patchStep(2, { status: 'uploading', progress: 50 })
-      Promise.all([
-        fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(10000),
-          body: JSON.stringify({
-            to: fanData.email,
-            subject: 'Fan Registration Confirmation — Land Rover Club Tanzania',
-            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #16a34a;">Welcome to LRCT Fans! 🎉</h2>
-              <p>Dear ${fanData.full_name},</p>
-              <p>Thank you for registering as a fan with Land Rover Club Tanzania. We are excited to have you join our community!</p>
-              <p><strong>Your Registration Details:</strong></p>
-              <ul>
-                <li><strong>Name:</strong> ${fanData.full_name}</li>
-                <li><strong>Email:</strong> ${fanData.email}</li>
-                <li><strong>Phone:</strong> ${fanData.phone}</li>
-                <li><strong>City:</strong> ${fanData.city}</li>
-              </ul>
-              <p>You will now receive access to:</p>
-              <ul>
-                <li>Community updates and announcements</li>
-                <li>Invitations to public events</li>
-                <li>Monthly newsletter</li>
-              </ul>
-              <p>If you have any questions, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
-              <p>Best regards,<br/>Land Rover Club Tanzania Team</p>
-            </div>`
-          })
-        }).catch(e => console.error('User email failed:', e)),
-        fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(10000),
-          body: JSON.stringify({
-            to: 'landroverclubtz@gmail.com',
-            subject: `New Fan Registration: ${fanData.full_name}`,
-            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>New Fan Registration</h2>
-              <p><strong>Name:</strong> ${fanData.full_name}</p>
-              <p><strong>Email:</strong> ${fanData.email}</p>
-              <p><strong>Phone:</strong> ${fanData.phone}</p>
-              <p><strong>City:</strong> ${fanData.city}</p>
-              <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-            </div>`
-          })
-        }).catch(e => console.error('Admin email failed:', e))
-      ]).then(() => patchStep(2, { status: 'done', progress: 100 }))
+      await sendFanConfirmationEmail(fanData)
+      patchStep(2, { status: 'done', progress: 100 })
 
       setSubmitSuccess(true)
     } catch (err: any) {
@@ -502,7 +460,6 @@ const Membership = () => {
         applicant_signature: applicantSignature,
         declaration_agreed: declarationAgreed,
         tc_agreed: memberTcAgreed,
-        // ✅ All files now uploaded and saved
         photo_url,
         id_doc_url,
         payment_proof_url,
@@ -514,72 +471,25 @@ const Membership = () => {
       })
       patchStep(3, { status: 'done', progress: 100 })
 
-      // Send confirmation emails (non-blocking)
+      // Send confirmation emails
       patchStep(4, { status: 'uploading', progress: 50 })
-      Promise.all([
-        fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(10000),
-          body: JSON.stringify({
-            to: personal.email,
-            subject: 'Membership Application Received — Land Rover Club Tanzania',
-            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #16a34a;">Application Received! ✓</h2>
-              <p>Dear ${personal.full_name},</p>
-              <p>Thank you for submitting your membership application to Land Rover Club Tanzania. We have received your application and it is under review.</p>
-              <p><strong>Application Details:</strong></p>
-              <ul>
-                <li><strong>Full Name:</strong> ${personal.full_name}</li>
-                <li><strong>Email:</strong> ${personal.email}</li>
-                <li><strong>Phone:</strong> ${personal.phone}</li>
-                <li><strong>Guarantor:</strong> ${guarantor.full_name}</li>
-              </ul>
-              <p>Our club committee will review your application and contact you within 7-10 business days with a decision.</p>
-              <p><strong>Next Steps:</strong></p>
-              <ul>
-                <li>We will verify your submitted documents</li>
-                <li>The committee will review your application</li>
-                <li>You will be contacted with the decision</li>
-              </ul>
-              <p>If you have any questions in the meantime, please contact us at <strong>landroverclubtz@gmail.com</strong></p>
-              <p>Best regards,<br/>Land Rover Club Tanzania Committee</p>
-            </div>`
-          })
-        }).catch(e => console.error('User email failed:', e)),
-        fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(10000),
-          body: JSON.stringify({
-            to: 'landroverclubtz@gmail.com',
-            subject: `New Membership Application: ${personal.full_name}`,
-            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>New Membership Application</h2>
-              <p><strong>Name:</strong> ${personal.full_name}</p>
-              <p><strong>Email:</strong> ${personal.email}</p>
-              <p><strong>Phone:</strong> ${personal.phone}</p>
-              <p><strong>Date of Birth:</strong> ${personal.dob}</p>
-              <p><strong>Gender:</strong> ${personal.gender}</p>
-              <p><strong>P.O. Box:</strong> ${personal.po_box}</p>
-              <p><strong>How They Heard About Us:</strong> ${personal.heard_about} ${personal.heard_other ? '(' + personal.heard_other + ')' : ''}</p>
-              <p><strong>Bio/Message:</strong> ${personal.bio}</p>
-              <hr style="border: 1px solid #ccc; margin: 20px 0;">
-              <h3>Guarantor Details</h3>
-              <p><strong>Name:</strong> ${guarantor.full_name}</p>
-              <p><strong>Phone:</strong> ${guarantor.phone}</p>
-              <p><strong>Email:</strong> ${guarantor.email}</p>
-              <p><strong>Description:</strong> ${guarantor.description}</p>
-              <hr style="border: 1px solid #ccc; margin: 20px 0;">
-              <h3>Uploaded Documents</h3>
-              ${photo_url ? `<p><strong>Photo:</strong> <a href="${photo_url}">View Photo</a></p>` : ''}
-              ${id_doc_url ? `<p><strong>ID Document:</strong> <a href="${id_doc_url}">View ID</a></p>` : ''}
-              ${payment_proof_url ? `<p><strong>Payment Proof:</strong> <a href="${payment_proof_url}">View Receipt</a></p>` : ''}
-              <p><strong>Application Time:</strong> ${new Date().toLocaleString()}</p>
-            </div>`
-          })
-        }).catch(e => console.error('Admin email failed:', e))
-      ]).then(() => patchStep(4, { status: 'done', progress: 100 }))
+      await sendMemberConfirmationEmail({
+        full_name: personal.full_name,
+        email: personal.email,
+        phone: personal.phone,
+        dob: personal.dob,
+        gender: personal.gender,
+        po_box: personal.po_box,
+        heard_about: personal.heard_about,
+        bio: personal.bio,
+        guarantor_name: guarantor.full_name,
+        guarantor_phone: guarantor.phone,
+        guarantor_email: guarantor.email,
+        photo_url,
+        id_doc_url,
+        payment_proof_url,
+      })
+      patchStep(4, { status: 'done', progress: 100 })
 
       await new Promise(r => setTimeout(r, 500))
       setSubmitSuccess(true)
@@ -598,28 +508,109 @@ const Membership = () => {
 
   // ── Success ───────────────────────────────────────────────────────────────
   if (submitSuccess) {
-    return (
-      <section className="py-20 bg-gray-50 min-h-screen flex items-center">
-        <div className="max-w-lg mx-auto px-4 text-center">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-12 w-12 text-green-600" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            {tab === 'fan' ? 'Welcome to the LRCT Family!' : 'Application Submitted!'}
-          </h2>
-          <p className="text-gray-600 mb-3">
-            {tab === 'fan'
-              ? 'You have been registered as a fan. We will be in touch with updates and events!'
-              : 'Your membership application has been received. Our team will review and confirm within 2–3 business days.'}
-          </p>
-          {tab === 'member' && <p className="text-sm text-gray-500 mb-8">Questions? Email <span className="font-medium">landroverclubtz@gmail.com</span></p>}
-          <button onClick={resetAll} className="bg-green-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-colors">
-            Back to Membership
-          </button>
-        </div>
-      </section>
-    )
+  const handleDownloadPDF = async () => {
+    let logo_base64: string | undefined
+
+    try {
+      // Fetch SVG and convert to PNG for better jsPDF compatibility
+      const res = await fetch('/lrct.svg')
+      const svgText = await res.text()
+      
+      logo_base64 = await new Promise<string>((resolve) => {
+        const img = new Image()
+        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' })
+        const url = URL.createObjectURL(svgBlob)
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          // Set a fixed high resolution for the logo
+          const size = 512
+          canvas.width = size
+          canvas.height = size
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.clearRect(0, 0, size, size)
+            // Draw maintaining aspect ratio if possible, or just fit to square
+            ctx.drawImage(img, 0, 0, size, size)
+            resolve(canvas.toDataURL('image/png'))
+          }
+          URL.revokeObjectURL(url)
+        }
+        img.src = url
+      })
+    } catch (e) {
+      console.error('Logo fetch error:', e)
+    }
+
+    const id_doc_url = idDoc ? URL.createObjectURL(idDoc) : ''
+    const payment_proof_url = paymentProof ? URL.createObjectURL(paymentProof) : ''
+    const photo_url = tab === 'fan' 
+      ? (fanPhoto ? URL.createObjectURL(fanPhoto) : '') 
+      : (memberPhoto ? URL.createObjectURL(memberPhoto) : '')
+
+    await generateMembershipPDF({
+      type: tab as 'fan' | 'member',
+      full_name: tab === 'fan' ? fanData.full_name : personal.full_name,
+      email: tab === 'fan' ? fanData.email : personal.email,
+      phone: tab === 'fan' ? fanData.phone : personal.phone,
+      po_box: tab === 'fan' ? fanData.city : personal.po_box,
+      bio: tab === 'member' ? personal.bio : '',
+      dob: personal.dob,
+      gender: personal.gender,
+      guarantor_name: guarantor.full_name,
+      guarantor_phone: guarantor.phone,
+      guarantor_email: guarantor.email,
+      applicant_signature: tab === 'fan' ? fanSignature : applicantSignature,
+      submitted_at: new Date().toISOString(),
+      logo_base64,
+      photo_url,
+      id_doc_url,
+      payment_proof_url,
+    })
   }
+
+  return (
+    <section className="py-20 bg-gray-50 min-h-screen flex items-center">
+      <div className="max-w-lg mx-auto px-4 text-center">
+        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="h-12 w-12 text-green-600" />
+        </div>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          {tab === 'fan' ? 'Welcome to the LRCT Family!' : 'Application Submitted!'}
+        </h2>
+
+        <p className="text-gray-600 mb-3">
+          {tab === 'fan'
+            ? 'You have been registered as a fan. A confirmation email has been sent to your inbox!'
+            : 'Your membership application has been received. Our team will review and confirm within 2–3 business days.'}
+        </p>
+
+        <p className="text-sm text-gray-400 mb-8">
+          A confirmation email has been sent to your email address.
+        </p>
+
+        {(tab === 'member' || tab === 'fan') && (
+          <>
+            <button
+              onClick={handleDownloadPDF}
+              className="w-full mb-4 flex items-center justify-center gap-2 bg-gray-900 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors"
+            >
+              Download {tab === 'fan' ? 'Registration' : 'Application'} PDF
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={resetAll}
+          className="w-full bg-green-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-colors"
+        >
+          Back to Membership
+        </button>
+      </div>
+    </section>
+  )
+}
 
   // ── Submitting overlay ────────────────────────────────────────────────────
   if (isSubmitting) {
@@ -733,6 +724,10 @@ const Membership = () => {
                   <input type="text" required value={fanData.city} onChange={e => setFanData({...fanData, city: e.target.value})} className={inputCls} placeholder="Dar es Salaam" />
                 </Field>
 
+                <Field label="Applicant Signature" required hint="Please draw your signature below">
+                  <SignatureCanvas onChange={setFanSignature} />
+                </Field>
+
                 <div className={`flex items-start gap-3 p-4 border-2 rounded-xl transition-colors ${fanTcAgreed ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-green-300'}`}>
                   <input type="checkbox" id="fan-tc" checked={fanTcAgreed} onChange={e => setFanTcAgreed(e.target.checked)}
                     className="mt-0.5 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer flex-shrink-0" />
@@ -749,12 +744,17 @@ const Membership = () => {
                     <ScrollText className="h-3 w-3 flex-shrink-0" /> You must agree to the Terms & Conditions to register.
                   </p>
                 )}
+                {!fanSignature && fanTcAgreed && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1 -mt-2">
+                    <PenLine className="h-3 w-3 flex-shrink-0" /> Signature is mandatory.
+                  </p>
+                )}
 
                 {submitError && (
                   <p className="text-red-600 text-sm bg-red-50 border border-red-200 py-3 px-4 rounded-lg">{submitError}</p>
                 )}
 
-                <button type="submit" disabled={!fanTcAgreed}
+                <button type="submit" disabled={!fanTcAgreed || !fanSignature}
                   className="w-full bg-green-600 text-white py-4 rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                   Register as Fan
                 </button>
