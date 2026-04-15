@@ -116,7 +116,7 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
       doc.setFontSize(7.5)
       doc.setTextColor(180, 180, 180)
       text(
-        'Land Rover Club Tanzania  ·  P.O. Box 77, Morogoro  ·  info@landroverclub.or.tz  ·  landroverclub.or.tz',
+        'LandRover Club Tanzania  ·  P.O. Box 77, Morogoro  ·  info@landroverclub.or.tz  ·  landroverclub.or.tz',
         pageW / 2, 293, { align: 'center' }
       )
     }
@@ -145,7 +145,7 @@ if (data.logo_base64) {
 doc.setFont('helvetica', 'bold')
 doc.setFontSize(15)
 doc.setTextColor(17, 24, 39)
-text('Land Rover Club Tanzania', pageW / 2 + 10, 13, { align: 'center' })
+text('LandRover Club Tanzania', pageW / 2 + 10, 13, { align: 'center' })
 doc.setFont('helvetica', 'normal')
 doc.setFontSize(8.5)
 doc.setTextColor(80, 80, 80)
