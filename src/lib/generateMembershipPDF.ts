@@ -17,16 +17,25 @@ interface MembershipPDFData {
   applicant_signature?: string | null
   submitted_at?: string
   logo_base64?: string
-  photo_url?: string         // Passport photo URL
-  id_doc_url?: string        // Cloudinary URL
-  payment_proof_url?: string // Cloudinary URL
+  photo_url?: string
+  id_doc_url?: string
+  payment_proof_url?: string
   event_title?: string
   event_date?: string
   event_location?: string
   message?: string
+  // ── Event-specific fields (previously missing) ──────────────────────────
+  vehicle?: string
+  days_attending?: string
+  duration?: string
+  people_count?: string
+  package_price?: string
+  accommodation_type?: string
+  accommodation_nights?: string
+  payment_method?: string
+  emergency_contact?: string
 }
 
-// Fetch a remote URL and return base64 data URL
 const fetchAsBase64 = async (url: string): Promise<string> => {
   const res = await fetch(url)
   const blob = await res.blob()
@@ -39,7 +48,6 @@ const fetchAsBase64 = async (url: string): Promise<string> => {
 }
 
 export const generateMembershipPDF = async (data: MembershipPDFData): Promise<void> => {
-  // Pre-fetch remote attachments before building PDF
   let photoBase64: string | null = null
   let idDocBase64: string | null = null
   let paymentProofBase64: string | null = null
@@ -60,7 +68,6 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   const contentW = pageW - margin * 2
   let y = 0
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   const text = (
     str: string, x: number, yPos: number,
     opts?: { align?: 'left' | 'center' | 'right'; maxWidth?: number }
@@ -130,39 +137,34 @@ export const generateMembershipPDF = async (data: MembershipPDFData): Promise<vo
   const isEvent = data.type === 'event'
 
   // ── HEADER ────────────────────────────────────────────────────────────────
-// White background
-doc.setFillColor(255, 255, 255)
-rect(0, 0, pageW, 30, 'F')
+  doc.setFillColor(255, 255, 255)
+  rect(0, 0, pageW, 30, 'F')
 
-// Logo top-left
-if (data.logo_base64) {
-  try {
-    doc.addImage(data.logo_base64, 'PNG', margin, 4, 20, 20)
-  } catch { /* skip */ }
-}
+  if (data.logo_base64) {
+    try {
+      doc.addImage(data.logo_base64, 'PNG', margin, 4, 20, 20)
+    } catch { /* skip */ }
+  }
 
-// Title centered (shifted right to clear logo)
-doc.setFont('helvetica', 'bold')
-doc.setFontSize(15)
-doc.setTextColor(17, 24, 39)
-text('LandRover Club Tanzania', pageW / 2 + 10, 13, { align: 'center' })
-doc.setFont('helvetica', 'normal')
-doc.setFontSize(8.5)
-doc.setTextColor(80, 80, 80)
-const subtitle = isFan
-  ? 'Fomu ya Usajili wa Shauku (Fan)  ·  Fan Registration Form'
-  : isEvent
-  ? 'Fomu ya Usajili wa Tukio  ·  Event Registration Form'
-  : 'Fomu ya Maombi ya Uanachama  ·  Membership Application Form'
-text(subtitle, pageW / 2 + 10, 22, { align: 'center' })
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(15)
+  doc.setTextColor(17, 24, 39)
+  text('LandRover Club Tanzania', pageW / 2 + 10, 13, { align: 'center' })
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(80, 80, 80)
+  const subtitle = isFan
+    ? 'Fomu ya Usajili wa Shauku (Fan)  ·  Fan Registration Form'
+    : isEvent
+    ? 'Fomu ya Usajili wa Tukio  ·  Event Registration Form'
+    : 'Fomu ya Maombi ya Uanachama  ·  Membership Application Form'
+  text(subtitle, pageW / 2 + 10, 22, { align: 'center' })
 
-// Green accent line below header
-doc.setDrawColor(21, 128, 61)
-doc.setLineWidth(1.2)
-line(0, 30, pageW, 30)
-doc.setLineWidth(0.2) // reset
+  doc.setDrawColor(21, 128, 61)
+  doc.setLineWidth(1.2)
+  line(0, 30, pageW, 30)
+  doc.setLineWidth(0.2)
 
-  // White strip below header
   y = 30
   doc.setFillColor(255, 255, 255)
   rect(0, y, pageW, 10, 'F')
@@ -178,45 +180,47 @@ doc.setLineWidth(0.2) // reset
     text(`Event: ${data.event_title || 'LRCT Event'}`, pageW - margin, y + 7, { align: 'right' })
   }
 
-  // Photo box — only for fan and member registrations
-const photoX = pageW - margin - 26
-const photoY = y + 1
-const photoH = 34
+  const photoX = pageW - margin - 26
+  const photoY = y + 1
+  const photoH = 34
 
-if (!isEvent) {
-  doc.setFillColor(248, 250, 252)
-  doc.setDrawColor(160, 160, 160)
-  rect(photoX, photoY, 26, photoH, 'FD')
+  if (!isEvent) {
+    doc.setFillColor(248, 250, 252)
+    doc.setDrawColor(160, 160, 160)
+    rect(photoX, photoY, 26, photoH, 'FD')
 
-  if (photoBase64) {
-    try {
-      doc.addImage(photoBase64, 'JPEG', photoX + 1, photoY + 1, 24, photoH - 2)
-    } catch {
+    if (photoBase64) {
+      try {
+        doc.addImage(photoBase64, 'JPEG', photoX + 1, photoY + 1, 24, photoH - 2)
+      } catch {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(7)
+        doc.setTextColor(130, 130, 130)
+        text('PICHA', photoX + 13, photoY + 14, { align: 'center' })
+        text('PHOTO', photoX + 13, photoY + 20, { align: 'center' })
+      }
+    } else {
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(7)
       doc.setTextColor(130, 130, 130)
       text('PICHA', photoX + 13, photoY + 14, { align: 'center' })
       text('PHOTO', photoX + 13, photoY + 20, { align: 'center' })
     }
-  } else {
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7)
-    doc.setTextColor(130, 130, 130)
-    text('PICHA', photoX + 13, photoY + 14, { align: 'center' })
-    text('PHOTO', photoX + 13, photoY + 20, { align: 'center' })
   }
-}
 
-// Content starts below the strip (and photo box if shown)
-y = isEvent ? y + 10 : photoY + photoH + 6
+  y = isEvent ? y + 10 : photoY + photoH + 6
 
   const col1x = margin
   const col2x = margin + contentW / 2 + 2
-  const halfW = contentW / 2 - 6  // safe column value width
+  const halfW = contentW / 2 - 6
 
-  // ── SECTION 1 ─────────────────────────────────────────────────────────────
-  checkY(isFan ? 40 : isEvent ? 45 : 55)
-  const personalHeader = isEvent ? '1. TAARIFA ZA MSAJILIWA  ·  REGISTRANT INFORMATION' : '1. TAARIFA BINAFSI  ·  PERSONAL INFORMATION'
+  // ── SECTION 1: REGISTRANT INFORMATION ────────────────────────────────────
+  checkY(45)
+  const personalHeader = isEvent
+    ? '1. TAARIFA ZA MSAJILIWA  ·  REGISTRANT INFORMATION'
+    : isFan
+    ? '1. TAARIFA BINAFSI  ·  PERSONAL INFORMATION'
+    : '1. TAARIFA BINAFSI  ·  PERSONAL INFORMATION'
   y = sectionHeader(personalHeader, y) + 6
 
   if (isFan) {
@@ -228,50 +232,36 @@ y = isEvent ? y + 10 : photoY + photoH + 6
     field('Location / Mahali', data.po_box || '—', col1x, col1x + 30, y, contentW - 35)
     y += 13
   } else if (isEvent) {
+    // Row 1 – Name + Event Date
     field('Full Name / Jina Kamili', data.full_name, col1x, col1x + 35, y, halfW - 35)
     field('Event Date / Tarehe', data.event_date || '—', col2x, col2x + 30, y, halfW - 30)
     y += 11
+    // Row 2 – Email + Phone
     field('Email / Barua Pepe', data.email, col1x, col1x + 30, y, halfW - 35)
     field('Phone / Simu', data.phone, col2x, col2x + 25, y, halfW - 30)
     y += 11
-    field('Location / Mahali', data.event_location || '—', col1x, col1x + 30, y, contentW - 35)
+    // Row 3 – Location + Vehicle
+    field('Location / Mahali', data.event_location || '—', col1x, col1x + 30, y, halfW - 35)
+    field('Vehicle / Gari', data.vehicle || '—', col2x, col2x + 25, y, halfW - 30)
     y += 13
-    if (data.message) {
-      checkY(24)
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 100, 100)
-      text('Message / Notes', col1x, y)
-      y += 5
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20)
-      const msgLines = doc.splitTextToSize(data.message, contentW - 4)
-      const msgH = msgLines.length * 4.5 + 6
-      doc.setFillColor(252, 252, 252); doc.setDrawColor(220, 220, 220)
-      rect(col1x - 1, y - 4, contentW + 2, msgH, 'FD')
-      doc.text(msgLines, col1x + 2, y)
-      y += msgH + 4
-    }
   } else {
     field('Full Name / Jina Kamili', data.full_name, col1x, col1x + 35, y, halfW - 35)
     field('Gender / Jinsia',
       data.gender === 'Me' ? 'Me (Male)' : data.gender === 'Ke' ? 'Ke (Female)' : data.gender || '—',
       col2x, col2x + 25, y, halfW - 25)
     y += 11
-
     field('Date of Birth / Tarehe ya Kuzaliwa',
       data.dob ? new Date(data.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—',
       col1x, col1x + 48, y, halfW - 48)
     field('P.O. Box / Location', data.po_box || '—', col2x, col2x + 30, y, halfW - 30)
     y += 11
-
     field('Phone / Simu', data.phone, col1x, col1x + 25, y, halfW - 25)
     field('Email / Barua Pepe', data.email, col2x, col2x + 30, y, halfW - 30)
     y += 11
+    field('How did you hear about us?', data.heard_about || '—', col1x, col1x + 48, y, contentW - 50)
+    y += 13
 
-    if (!isFan) {
-      field('How did you hear about us?', data.heard_about || '—', col1x, col1x + 48, y, contentW - 50)
-      y += 13
-    }
-
-    if (data.bio && !isFan) {
+    if (data.bio) {
       checkY(24)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 100, 100)
       text('Brief Profile / Wasifu kwa Ufipi', col1x, y)
@@ -286,7 +276,90 @@ y = isEvent ? y + 10 : photoY + photoH + 6
     }
   }
 
-  // ── SECTION 2 ─────────────────────────────────────────────────────────────
+  // ── SECTION 2: ATTENDANCE & PACKAGE (event only) ──────────────────────────
+  if (isEvent) {
+    // header(7) + gap(6) + row1(11) + row2(11) + gap(6) + total box(10+6) = ~57
+    const hasTotal = !!data.package_price
+    checkY(hasTotal ? 57 : 41)
+    y = sectionHeader('2. HUDHURIO NA PAKITI  ·  ATTENDANCE & PACKAGE', y) + 6
+
+    const durationLabel = data.duration === 'one' ? 'One Night' : data.duration === 'two' ? 'Two Nights' : data.duration || '—'
+    field('Days Attending / Siku za Kuja', data.days_attending || '—', col1x, col1x + 42, y, halfW - 40)
+    field('Duration / Muda', durationLabel, col2x, col2x + 25, y, halfW - 30)
+    y += 11
+
+    const peopleLabel = data.people_count
+      ? `${data.people_count} ${data.people_count === '1' ? 'person' : 'people'}`
+      : '—'
+    field('No. of People / Idadi ya Watu', peopleLabel, col1x, col1x + 45, y, halfW - 45)
+    field('Package Price / Bei', data.package_price ? `TZS ${data.package_price}` : '—', col2x, col2x + 30, y, halfW - 30)
+    y += 11
+
+    if (data.package_price) {
+      checkY(16)
+      doc.setFillColor(240, 253, 244); doc.setDrawColor(187, 247, 208)
+      rect(col1x, y, contentW, 10, 'FD')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(21, 128, 61)
+      text('Package Total / Jumla ya Gharama', col1x + 3, y + 6.5)
+      doc.setFontSize(10)
+      text(`TZS ${data.package_price}`, pageW - margin, y + 6.5, { align: 'right' })
+      y += 10
+    }
+    y += 8 // section bottom padding
+  }
+
+  // ── SECTION 3: ACCOMMODATION (event only) ────────────────────────────────
+  if (isEvent) {
+    // header(7) + gap(6) + row(11) + padding(8) = 32
+    checkY(32)
+    y = sectionHeader('3. MAKAZI  ·  ACCOMMODATION', y) + 6
+
+    field('Accommodation Type / Aina ya Makazi', data.accommodation_type || '—', col1x, col1x + 58, y, halfW - 58)
+    field('Nights / Usiku', data.accommodation_nights || '—', col2x, col2x + 25, y, halfW - 30)
+    y += 11
+    y += 8 // section bottom padding
+  }
+
+  // ── SECTION 4: PAYMENT (event only) ──────────────────────────────────────
+  if (isEvent) {
+    // header(7) + gap(6) + row(11) + padding(8) = 32
+    checkY(32)
+    y = sectionHeader('4. MALIPO  ·  PAYMENT', y) + 6
+
+    field('Payment Method / Njia ya Malipo', data.payment_method || '—', col1x, col1x + 50, y, halfW - 50)
+    y += 11
+    y += 8 // section bottom padding
+  }
+
+  // ── SECTION 5: ADDITIONAL INFO (event only) ───────────────────────────────
+  if (isEvent && (data.emergency_contact || data.message)) {
+    const msgLines = data.message ? doc.splitTextToSize(data.message, contentW - 4) : []
+    const msgBlockH = msgLines.length > 0 ? msgLines.length * 4.5 + 6 + 14 : 0
+    const emergencyH = data.emergency_contact ? 11 : 0
+    // header(7) + gap(6) + emergency row + message block + padding(8)
+    checkY(7 + 6 + emergencyH + msgBlockH + 8)
+    y = sectionHeader('5. TAARIFA ZAIDI  ·  ADDITIONAL INFORMATION', y) + 6
+
+    if (data.emergency_contact) {
+      field('Emergency Contact / Mawasiliano ya Dharura', data.emergency_contact, col1x, col1x + 70, y, contentW - 60)
+      y += 11
+    }
+
+    if (data.message) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(100, 100, 100)
+      text('Comments & Requests / Maoni na Maombi', col1x, y)
+      y += 5
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20)
+      const msgH = msgLines.length * 4.5 + 6
+      doc.setFillColor(252, 252, 252); doc.setDrawColor(220, 220, 220)
+      rect(col1x - 1, y - 4, contentW + 2, msgH, 'FD')
+      doc.text(msgLines, col1x + 2, y)
+      y += msgH
+    }
+    y += 8 // section bottom padding
+  }
+
+  // ── SECTION 2 (non-event): GUARANTOR ─────────────────────────────────────
   if (!isFan && !isEvent) {
     checkY(44)
     y = sectionHeader('2. MDHAMINI  ·  GUARANTOR DETAILS', y) + 6
@@ -299,7 +372,7 @@ y = isEvent ? y + 10 : photoY + photoH + 6
     y += 14
   }
 
-  // ── SECTION 3 ─────────────────────────────────────────────────────────────
+  // ── SECTION 3 (non-event): FEES ───────────────────────────────────────────
   if (!isFan && !isEvent) {
     checkY(62)
     y = sectionHeader('3. ADA NA MICHANGO  ·  FEES & CONTRIBUTIONS', y) + 6
@@ -344,11 +417,13 @@ y = isEvent ? y + 10 : photoY + photoH + 6
     y += 26
   }
 
-  // ── SECTION 4 ─────────────────────────────────────────────────────────────
-  checkY(55)
-  const sectionTitle = isFan ? '2. TAMKO LA MWOMBAJI  ·  FAN DECLARATION' : isEvent ? '2. TAMKO LA MSAJILIWA  ·  REGISTRANT DECLARATION' : '4. TAMKO LA MWOMBAJI  ·  APPLICANT DECLARATION'
-  y = sectionHeader(sectionTitle, y) + 6
-
+  // ── DECLARATION ───────────────────────────────────────────────────────────
+  const declSectionNum = isEvent ? '6' : isFan ? '2' : '4'
+  const sectionTitle = isFan
+    ? `${declSectionNum}. TAMKO LA MWOMBAJI  ·  FAN DECLARATION`
+    : isEvent
+    ? `${declSectionNum}. TAMKO LA MSAJILIWA  ·  REGISTRANT DECLARATION`
+    : `${declSectionNum}. TAMKO LA MWOMBAJI  ·  APPLICANT DECLARATION`
   const declaration = isFan
     ? `Mimi ${data.full_name || '_______________'} ninasajiliwa kama shauku (Fan) wa Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.`
     : isEvent
@@ -356,7 +431,9 @@ y = isEvent ? y + 10 : photoY + photoH + 6
     : `Mimi ${data.full_name || '_______________'} ninaleta maombi ya kujiunga na Tanzania Land Rover Klabu, ninaahidi kuwa mwaminifu na kutimiza masharti yote yaliyopo kwenye Katiba, Kanuni na Taratibu za Klabu ikiwa maombi yangu yatakubaliwa. Ninakiri kuwa taarifa zote nilizoziandika kwenye fomu hii ni za kweli na sahihi.`
   const declLines = doc.splitTextToSize(declaration, contentW - 6)
   const declH = declLines.length * 4.5 + 10
-  checkY(declH + 38)
+  // Pre-compute full block: header(7) + gap(6) + decl box + gap(8) + sig label(5) + sig box(20) + gap(6)
+  checkY(7 + 6 + declH + 8 + 5 + 20 + 6)
+  y = sectionHeader(sectionTitle, y) + 6
   doc.setFillColor(249, 250, 251); doc.setDrawColor(220, 220, 220)
   rect(col1x, y, contentW, declH, 'FD')
   doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5); doc.setTextColor(50, 50, 50)
@@ -364,7 +441,6 @@ y = isEvent ? y + 10 : photoY + photoH + 6
   y += declH + 8
 
   // Signature row
-  checkY(30)
   const sigW = contentW / 2 - 5
   doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(60, 60, 60)
   const sigLabel = isEvent ? 'Registrant Signature / Sahihi ya Msajiliwa' : 'Applicant Signature / Sahihi ya Mwombaji'
@@ -390,7 +466,8 @@ y = isEvent ? y + 10 : photoY + photoH + 6
   y += 26
 
   // ── IMPORTANT NOTES ───────────────────────────────────────────────────────
-  checkY(30)
+  // header(7) + gap(6) + 3 notes × 6 each = 31
+  checkY(31)
   y = sectionHeader('MUHIMU  ·  IMPORTANT NOTES', y) + 6
   const notes = [
     'Ambatisha nakala ya Kitambulisho (NIDA / Hati ya Kusafiria / Leseni ya Udereva)',
@@ -440,10 +517,10 @@ y = isEvent ? y + 10 : photoY + photoH + 6
     }
   }
 
-  // ── FOOTER (all pages) ────────────────────────────────────────────────────
+  // ── FOOTER ────────────────────────────────────────────────────────────────
   addFooter()
 
   // ── SAVE ──────────────────────────────────────────────────────────────────
-  const fileName = `LRCT-Membership-${(data.full_name || 'applicant').replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
+  const fileName = `LRCT-${isEvent ? 'Event' : 'Membership'}-${(data.full_name || 'applicant').replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
   doc.save(fileName)
 }
